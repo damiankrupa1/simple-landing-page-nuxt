@@ -4,7 +4,7 @@
  */
 
 // storage-adapter-import-placeholder
-import { sqliteAdapter } from '@payloadcms/db-sqlite'
+import { postgresAdapter } from '@payloadcms/db-postgres'
 import { payloadCloudPlugin } from '@payloadcms/payload-cloud'
 import { lexicalEditor } from '@payloadcms/richtext-lexical'
 import path from 'path'
@@ -19,6 +19,8 @@ import { formBuilderPlugin } from '@payloadcms/plugin-form-builder'
 
 const filename = fileURLToPath(import.meta.url)
 const dirname = path.dirname(filename)
+const baseUrl = process.env.FRONTEND_URL
+const nuxtPayloadUrl = process.env.NUXT_PUBLIC_PAYLOAD_URL
 
 /**
  * Payload CMS configuration
@@ -38,11 +40,17 @@ const dirname = path.dirname(filename)
  */
 export default buildConfig({
   serverURL: process.env.PAYLOAD_PUBLIC_SERVER_URL || 'http://localhost:3000',
-  cors: ['http://localhost:3001', 'http://localhost:3000'],
+  cors: [nuxtPayloadUrl ?? '', baseUrl ?? ''],
   admin: {
     user: Users.slug,
     importMap: {
       baseDir: path.resolve(dirname),
+    },
+    livePreview: {
+      url: ({ data }) => {
+        return `${baseUrl}/${data.slug}`
+      },
+      collections: ['pages'],
     },
   },
   collections: [Users, Media, Pages],
@@ -51,9 +59,9 @@ export default buildConfig({
   typescript: {
     outputFile: path.resolve(dirname, 'payload-types.ts'),
   },
-  db: sqliteAdapter({
-    client: {
-      url: process.env.DATABASE_URI || '',
+  db: postgresAdapter({
+    pool: {
+      connectionString: process.env.DATABASE_URL,
     },
   }),
   sharp,
