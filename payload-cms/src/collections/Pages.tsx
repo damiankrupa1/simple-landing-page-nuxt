@@ -21,6 +21,13 @@ import { NewsletterFormBlock } from '@/blocks/NewsletterFormBlock'
  */
 const Pages: CollectionConfig = {
   slug: 'pages',
+  admin: {
+    livePreview: {
+      url: ({ data }) => {
+        return `${process.env.FRONTEND_URL}/${data.slug}`
+      },
+    },
+  },
   access: {
     read: () => true,
   },
