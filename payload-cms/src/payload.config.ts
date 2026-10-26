@@ -66,6 +66,7 @@ export default buildConfig({
     },
     migrationDir: path.resolve(dirname, 'migrations'),
     prodMigrations: migrations,
+    push: false,
   }),
   sharp,
   plugins: [
