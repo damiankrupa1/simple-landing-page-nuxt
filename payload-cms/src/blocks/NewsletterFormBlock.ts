@@ -3,7 +3,7 @@
  * @module NewsletterFormBlock
  */
 
-import { Block } from 'payload'
+import type { Block } from 'payload'
 
 /**
  * Newsletter form block configuration
@@ -19,6 +19,7 @@ export const NewsletterFormBlock: Block = {
     {
       name: 'heading',
       type: 'text',
+      localized: true,
       required: false,
     },
     {

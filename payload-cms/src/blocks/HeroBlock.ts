@@ -3,7 +3,7 @@
  * @module HeroBlock
  */
 
-import { Block } from 'payload'
+import type { Block } from 'payload'
 
 /**
  * Hero block configuration
@@ -25,11 +25,13 @@ export const HeroBlock: Block = {
     {
       name: 'heading',
       type: 'text',
+      localized: true,
       required: true,
     },
     {
       name: 'subheading',
       type: 'richText',
+      localized: true,
       required: true,
     },
     {
@@ -46,11 +48,13 @@ export const HeroBlock: Block = {
         {
           name: 'label',
           type: 'text',
+          localized: true,
           required: true,
         },
         {
           name: 'url',
           type: 'text',
+          localized: true,
           required: true,
         },
       ],

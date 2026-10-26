@@ -92,10 +92,28 @@ export interface Config {
   db: {
     defaultIDType: number;
   };
-  fallbackLocale: null;
-  globals: {};
-  globalsSelect: {};
-  locale: null;
+  fallbackLocale: ('false' | 'none' | 'null') | false | null | ('en' | 'pl') | ('en' | 'pl')[];
+  globals: {
+    navigation: Navigation;
+    'footer-content': FooterContent;
+    'studio-story': StudioStory;
+    brands: Brand;
+    'journal-section': JournalSection;
+    'campaign-slides': CampaignSlide;
+    'category-tiles': CategoryTile;
+    'shop-the-look': ShopTheLook;
+  };
+  globalsSelect: {
+    navigation: NavigationSelect<false> | NavigationSelect<true>;
+    'footer-content': FooterContentSelect<false> | FooterContentSelect<true>;
+    'studio-story': StudioStorySelect<false> | StudioStorySelect<true>;
+    brands: BrandsSelect<false> | BrandsSelect<true>;
+    'journal-section': JournalSectionSelect<false> | JournalSectionSelect<true>;
+    'campaign-slides': CampaignSlidesSelect<false> | CampaignSlidesSelect<true>;
+    'category-tiles': CategoryTilesSelect<false> | CategoryTilesSelect<true>;
+    'shop-the-look': ShopTheLookSelect<false> | ShopTheLookSelect<true>;
+  };
+  locale: 'en' | 'pl';
   widgets: {
     collections: CollectionsWidget;
   };
@@ -777,6 +795,389 @@ export interface PayloadMigrationsSelect<T extends boolean = true> {
   batch?: T;
   updatedAt?: T;
   createdAt?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "navigation".
+ */
+export interface Navigation {
+  id: number;
+  primaryNav: {
+    label: string;
+    url: string;
+    id?: string | null;
+  }[];
+  updatedAt?: string | null;
+  createdAt?: string | null;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "footer-content".
+ */
+export interface FooterContent {
+  id: number;
+  helpLinks?:
+    | {
+        label: string;
+        url: string;
+        id?: string | null;
+      }[]
+    | null;
+  worldLinks?:
+    | {
+        label: string;
+        url: string;
+        id?: string | null;
+      }[]
+    | null;
+  legalLinks?:
+    | {
+        label: string;
+        url: string;
+        id?: string | null;
+      }[]
+    | null;
+  contact?: {
+    email?: string | null;
+    phone?: string | null;
+    hours?: string | null;
+  };
+  social?: {
+    handle?: string | null;
+  };
+  updatedAt?: string | null;
+  createdAt?: string | null;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "studio-story".
+ */
+export interface StudioStory {
+  id: number;
+  eyebrow: string;
+  headlineLine1: string;
+  headlineLine2: string;
+  paragraph1: string;
+  paragraph2: string;
+  /**
+   * Enter a JSON array of short value markers.
+   */
+  values:
+    | {
+        [k: string]: unknown;
+      }
+    | unknown[]
+    | string
+    | number
+    | boolean
+    | null;
+  signatureLabel: string;
+  signatureTagline: string;
+  collectionLinkLabel: string;
+  collectionUrl: string;
+  image: number | Media;
+  updatedAt?: string | null;
+  createdAt?: string | null;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "brands".
+ */
+export interface Brand {
+  id: number;
+  eyebrow: string;
+  viewAllLabel: string;
+  viewAllUrl: string;
+  /**
+   * Enter a JSON array of brand names.
+   */
+  otherBrands:
+    | {
+        [k: string]: unknown;
+      }
+    | unknown[]
+    | string
+    | number
+    | boolean
+    | null;
+  updatedAt?: string | null;
+  createdAt?: string | null;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "journal-section".
+ */
+export interface JournalSection {
+  id: number;
+  eyebrow: string;
+  heading: string;
+  viewAllLabel: string;
+  viewAllUrl: string;
+  articles: {
+    category: string;
+    readingTime: string;
+    title: string;
+    summary: string;
+    image: number | Media;
+    url: string;
+    id?: string | null;
+  }[];
+  updatedAt?: string | null;
+  createdAt?: string | null;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "campaign-slides".
+ */
+export interface CampaignSlide {
+  id: number;
+  slides: {
+    seasonLabel: string;
+    editionLabel: string;
+    headlineLine1: string;
+    headlineLine2: string;
+    description: string;
+    shopCtaLabel: string;
+    secondaryCtaLabel: string;
+    tagline: string;
+    captionEyebrow: string;
+    captionHeadline: string;
+    image: number | Media;
+    id?: string | null;
+  }[];
+  updatedAt?: string | null;
+  createdAt?: string | null;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "category-tiles".
+ */
+export interface CategoryTile {
+  id: number;
+  eyebrow: string;
+  heading: string;
+  description: string;
+  cards: {
+    title: string;
+    subtitle: string;
+    categoryHandle: string;
+    image: number | Media;
+    id?: string | null;
+  }[];
+  updatedAt?: string | null;
+  createdAt?: string | null;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "shop-the-look".
+ */
+export interface ShopTheLook {
+  id: number;
+  eyebrow: string;
+  headlineLine1: string;
+  headlineLine2: string;
+  description: string;
+  captionLabel: string;
+  bottomTagline: string;
+  shopSetCtaLabel: string;
+  totalLabel: string;
+  sizeHint: string;
+  /**
+   * Enter a JSON array of Medusa product handles.
+   */
+  productHandles:
+    | {
+        [k: string]: unknown;
+      }
+    | unknown[]
+    | string
+    | number
+    | boolean
+    | null;
+  image: number | Media;
+  updatedAt?: string | null;
+  createdAt?: string | null;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "navigation_select".
+ */
+export interface NavigationSelect<T extends boolean = true> {
+  primaryNav?:
+    | T
+    | {
+        label?: T;
+        url?: T;
+        id?: T;
+      };
+  updatedAt?: T;
+  createdAt?: T;
+  globalType?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "footer-content_select".
+ */
+export interface FooterContentSelect<T extends boolean = true> {
+  helpLinks?:
+    | T
+    | {
+        label?: T;
+        url?: T;
+        id?: T;
+      };
+  worldLinks?:
+    | T
+    | {
+        label?: T;
+        url?: T;
+        id?: T;
+      };
+  legalLinks?:
+    | T
+    | {
+        label?: T;
+        url?: T;
+        id?: T;
+      };
+  contact?:
+    | T
+    | {
+        email?: T;
+        phone?: T;
+        hours?: T;
+      };
+  social?:
+    | T
+    | {
+        handle?: T;
+      };
+  updatedAt?: T;
+  createdAt?: T;
+  globalType?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "studio-story_select".
+ */
+export interface StudioStorySelect<T extends boolean = true> {
+  eyebrow?: T;
+  headlineLine1?: T;
+  headlineLine2?: T;
+  paragraph1?: T;
+  paragraph2?: T;
+  values?: T;
+  signatureLabel?: T;
+  signatureTagline?: T;
+  collectionLinkLabel?: T;
+  collectionUrl?: T;
+  image?: T;
+  updatedAt?: T;
+  createdAt?: T;
+  globalType?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "brands_select".
+ */
+export interface BrandsSelect<T extends boolean = true> {
+  eyebrow?: T;
+  viewAllLabel?: T;
+  viewAllUrl?: T;
+  otherBrands?: T;
+  updatedAt?: T;
+  createdAt?: T;
+  globalType?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "journal-section_select".
+ */
+export interface JournalSectionSelect<T extends boolean = true> {
+  eyebrow?: T;
+  heading?: T;
+  viewAllLabel?: T;
+  viewAllUrl?: T;
+  articles?:
+    | T
+    | {
+        category?: T;
+        readingTime?: T;
+        title?: T;
+        summary?: T;
+        image?: T;
+        url?: T;
+        id?: T;
+      };
+  updatedAt?: T;
+  createdAt?: T;
+  globalType?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "campaign-slides_select".
+ */
+export interface CampaignSlidesSelect<T extends boolean = true> {
+  slides?:
+    | T
+    | {
+        seasonLabel?: T;
+        editionLabel?: T;
+        headlineLine1?: T;
+        headlineLine2?: T;
+        description?: T;
+        shopCtaLabel?: T;
+        secondaryCtaLabel?: T;
+        tagline?: T;
+        captionEyebrow?: T;
+        captionHeadline?: T;
+        image?: T;
+        id?: T;
+      };
+  updatedAt?: T;
+  createdAt?: T;
+  globalType?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "category-tiles_select".
+ */
+export interface CategoryTilesSelect<T extends boolean = true> {
+  eyebrow?: T;
+  heading?: T;
+  description?: T;
+  cards?:
+    | T
+    | {
+        title?: T;
+        subtitle?: T;
+        categoryHandle?: T;
+        image?: T;
+        id?: T;
+      };
+  updatedAt?: T;
+  createdAt?: T;
+  globalType?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "shop-the-look_select".
+ */
+export interface ShopTheLookSelect<T extends boolean = true> {
+  eyebrow?: T;
+  headlineLine1?: T;
+  headlineLine2?: T;
+  description?: T;
+  captionLabel?: T;
+  bottomTagline?: T;
+  shopSetCtaLabel?: T;
+  totalLabel?: T;
+  sizeHint?: T;
+  productHandles?: T;
+  image?: T;
+  updatedAt?: T;
+  createdAt?: T;
+  globalType?: T;
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema
