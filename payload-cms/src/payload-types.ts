@@ -130,7 +130,7 @@ export interface UserAuthOperations {
 export interface User {
   id: number;
   /**
-   * Created by Medusa admin SSO. Signs in through Medusa, not with a password.
+   * Created by Medusa admin SSO (signs in through Medusa instead of a password).
    */
   ssoManaged?: boolean | null;
   updatedAt: string;
