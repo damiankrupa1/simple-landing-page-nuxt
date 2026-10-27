@@ -39,7 +39,7 @@ export const Users: CollectionConfig = {
       defaultValue: false,
       admin: {
         readOnly: true,
-        description: 'Created by Medusa admin SSO. Signs in through Medusa, not with a password.',
+        description: 'Created by Medusa admin SSO (signs in through Medusa instead of a password).',
       },
       access: { create: () => false, update: () => false },
     },
