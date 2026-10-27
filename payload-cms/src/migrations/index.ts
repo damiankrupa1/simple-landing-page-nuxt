@@ -1,5 +1,6 @@
 import * as migration_20261026_204415_initial from './20261026_204415_initial';
 import * as migration_20261026_210816_users_sso from './20261026_210816_users_sso';
+import * as migration_20261027_195756_s3_storage from './20261027_195756_s3_storage';
 
 export const migrations = [
   {
@@ -10,6 +11,11 @@ export const migrations = [
   {
     up: migration_20261026_210816_users_sso.up,
     down: migration_20261026_210816_users_sso.down,
-    name: '20261026_210816_users_sso'
+    name: '20261026_210816_users_sso',
+  },
+  {
+    up: migration_20261027_195756_s3_storage.up,
+    down: migration_20261027_195756_s3_storage.down,
+    name: '20261027_195756_s3_storage'
   },
 ];

@@ -17,6 +17,7 @@ import { Media } from './collections/Media'
 import Pages from './collections/Pages'
 import { formBuilderPlugin } from '@payloadcms/plugin-form-builder'
 import { migrations } from './migrations'
+import { s3StoragePlugin } from './storage/s3'
 
 const filename = fileURLToPath(import.meta.url)
 const dirname = path.dirname(filename)
@@ -71,7 +72,7 @@ export default buildConfig({
   sharp,
   plugins: [
     payloadCloudPlugin(),
-    // storage-adapter-placeholder
+    s3StoragePlugin(),
     formBuilderPlugin({}),
   ],
 })
