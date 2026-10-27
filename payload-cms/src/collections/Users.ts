@@ -4,6 +4,7 @@
  */
 
 import type { CollectionConfig } from 'payload'
+import { medusaSso } from '../endpoints/medusaSso'
 
 /**
  * Users collection configuration
@@ -21,9 +22,26 @@ export const Users: CollectionConfig = {
   admin: {
     useAsTitle: 'email',
   },
-  auth: true,
+  auth: {
+    cookies: {
+      secure: process.env.NODE_ENV === 'production',
+      // Medusa admin embeds /admin in an iframe on a sibling subdomain, which is same-site.
+      sameSite: 'Lax',
+      domain: process.env.PAYLOAD_COOKIE_DOMAIN || undefined,
+    },
+  },
+  endpoints: [medusaSso],
   fields: [
     // Email added by default
-    // Add more fields as needed
+    {
+      name: 'ssoManaged',
+      type: 'checkbox',
+      defaultValue: false,
+      admin: {
+        readOnly: true,
+        description: 'Created by Medusa admin SSO. Signs in through Medusa, not with a password.',
+      },
+      access: { create: () => false, update: () => false },
+    },
   ],
 }
