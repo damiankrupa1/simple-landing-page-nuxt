@@ -37,7 +37,7 @@ Set `MEDUSA_SSO_SECRET` and `MEDUSA_ADMIN_URL`, mint a token as described in `pa
 
 ## Checks
 
-`npx tsc --noEmit`, `pnpm lint`, `pnpm build` in `payload-cms`; `npm run build` in `nuxt-app`. There is no automated test suite.
+`npx tsc --noEmit`, `pnpm lint`, `pnpm build` in `payload-cms`; `npm run build` in `nuxt-app`. `pnpm test` in `payload-cms` runs the hook unit tests (Node >= 22.18); there are no other automated tests.
 
 ## Common startup failures
 

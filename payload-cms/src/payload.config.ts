@@ -25,6 +25,7 @@ import { Navigation } from './globals/Navigation'
 import { ShopTheLook } from './globals/ShopTheLook'
 import { StudioStory } from './globals/StudioStory'
 import { migrations } from './migrations'
+import { validateFormSubmission } from './hooks/validateFormSubmission'
 import { s3StoragePlugin } from './storage/s3'
 
 const filename = fileURLToPath(import.meta.url)
@@ -105,6 +106,10 @@ export default buildConfig({
   plugins: [
     payloadCloudPlugin(),
     s3StoragePlugin(),
-    formBuilderPlugin({}),
+    formBuilderPlugin({
+      formSubmissionOverrides: {
+        hooks: { beforeValidate: [validateFormSubmission] },
+      },
+    }),
   ],
 })

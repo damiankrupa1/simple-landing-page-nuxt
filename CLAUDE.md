@@ -34,10 +34,11 @@ Stack constraints: Node >= 22.13, pnpm 11.5.0 (pinned in `payload-cms/package.js
 | Production build | `pnpm build` |
 | Lint | `pnpm lint` |
 | Typecheck | `npx tsc --noEmit` |
+| Unit tests (hooks) | `pnpm test` |
 | Regenerate types / import map | `pnpm generate:types` / `pnpm generate:importmap` |
 | Create / run migrations | `pnpm migrate:create <name>` / `pnpm migrate` |
 
-`nuxt-app/`: `npm run dev`, `npm run build`, `npm run sync-types`. There is no test suite in either app; do not invent test scripts.
+`nuxt-app/`: `npm run dev`, `npm run build`, `npm run sync-types`. `payload-cms` has a small unit-test suite for `src/hooks` (`pnpm test`, built-in `node:test`, needs Node >= 22.18 because it runs the `.ts` files directly; test files import with the `.ts` extension, enabled by `allowImportingTsExtensions`). `nuxt-app` has no tests. Do not invent other test scripts.
 
 ## Environment (`payload-cms/.env.example` is the source of truth)
 

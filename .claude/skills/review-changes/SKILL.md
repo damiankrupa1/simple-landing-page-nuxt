@@ -19,7 +19,7 @@ disable-model-invocation: true
 4. Deployment impact: new env vars documented in `.env.example`, Dockerfile/`railway.json` assumptions, behaviour when a variable is unset (feature must degrade, not crash startup).
 5. Error handling and async: swallowed errors, unawaited promises, 200 on failure.
 6. Nuxt: SSR/hydration issues, null/undefined handling of optional CMS data, types synced from Payload.
-7. Unnecessary complexity, duplication, unjustified dependencies. Test gaps proportionate to risk (there is no test suite, so say what should be verified manually).
+7. Unnecessary complexity, duplication, unjustified dependencies. Test gaps proportionate to risk (the only tests are the hook unit tests in `payload-cms` (`pnpm test`), so say what should be verified manually).
 
 ## Report
 
