@@ -24,11 +24,23 @@ import { JournalSection } from './globals/JournalSection'
 import { Navigation } from './globals/Navigation'
 import { ShopTheLook } from './globals/ShopTheLook'
 import { StudioStory } from './globals/StudioStory'
+import { migrations } from './migrations'
+import { s3StoragePlugin } from './storage/s3'
 
 const filename = fileURLToPath(import.meta.url)
 const dirname = path.dirname(filename)
 const baseUrl = process.env.FRONTEND_URL
 const nuxtPayloadUrl = process.env.NUXT_PUBLIC_PAYLOAD_URL
+
+// Payload only accepts cookie-authenticated browser requests whose Origin is its own serverURL
+// (the csrf allowlist). With the localhost fallback on a deployed instance, every admin API
+// call (uploads, saves) is treated as anonymous and fails with "You are not allowed to perform
+// this action" even though the admin pages render logged in.
+const serverURL =
+  process.env.PAYLOAD_PUBLIC_SERVER_URL ||
+  (process.env.RAILWAY_PUBLIC_DOMAIN
+    ? `https://${process.env.RAILWAY_PUBLIC_DOMAIN}`
+    : 'http://localhost:3000')
 
 /**
  * Payload CMS configuration
@@ -47,7 +59,7 @@ const nuxtPayloadUrl = process.env.NUXT_PUBLIC_PAYLOAD_URL
  * @property {Array<Object>} plugins - Registered plugins
  */
 export default buildConfig({
-  serverURL: process.env.PAYLOAD_PUBLIC_SERVER_URL || 'http://localhost:3000',
+  serverURL,
   cors: [nuxtPayloadUrl ?? '', baseUrl ?? ''],
   admin: {
     user: Users.slug,
@@ -85,11 +97,14 @@ export default buildConfig({
     pool: {
       connectionString: process.env.DATABASE_URL,
     },
+    migrationDir: path.resolve(dirname, 'migrations'),
+    prodMigrations: migrations,
+    push: false,
   }),
   sharp,
   plugins: [
     payloadCloudPlugin(),
-    // storage-adapter-placeholder
+    s3StoragePlugin(),
     formBuilderPlugin({}),
   ],
 })

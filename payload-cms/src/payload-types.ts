@@ -147,6 +147,10 @@ export interface UserAuthOperations {
  */
 export interface User {
   id: number;
+  /**
+   * Created by Medusa admin SSO (signs in through Medusa instead of a password).
+   */
+  ssoManaged?: boolean | null;
   updatedAt: string;
   createdAt: string;
   email: string;
@@ -174,6 +178,8 @@ export interface User {
 export interface Media {
   id: number;
   alt: string;
+  prefix?: string | null;
+  _objectKey?: string | null;
   updatedAt: string;
   createdAt: string;
   url?: string | null;
@@ -526,6 +532,7 @@ export interface PayloadMigration {
  * via the `definition` "users_select".
  */
 export interface UsersSelect<T extends boolean = true> {
+  ssoManaged?: T;
   updatedAt?: T;
   createdAt?: T;
   email?: T;
@@ -550,6 +557,8 @@ export interface UsersSelect<T extends boolean = true> {
  */
 export interface MediaSelect<T extends boolean = true> {
   alt?: T;
+  prefix?: T;
+  _objectKey?: T;
   updatedAt?: T;
   createdAt?: T;
   url?: T;

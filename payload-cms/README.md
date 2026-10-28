@@ -28,7 +28,7 @@ A modern, component-based landing page built with Next.js and Payload CMS. This 
 ### Backend
 
 - Payload CMS
-- SQLite Database
+- PostgreSQL Database
 - Form Builder Plugin
 - Rich Text Editor (Lexical)
 
@@ -91,7 +91,7 @@ src/
 3. Set up environment variables:
    ```env
    PAYLOAD_SECRET=your-secret-key
-   DATABASE_URI=your-database-uri
+   DATABASE_URL=postgresql://postgres:postgres@localhost:5432/payload
    ```
 4. Run the development server:
    ```bash
@@ -102,7 +102,7 @@ src/
 
 ### Database
 
-- Using SQLite for data storage
+- Using PostgreSQL (`@payloadcms/db-postgres`), connection string in `DATABASE_URL`
 - Configured in `payload.config.ts`
 
 ### CMS Configuration

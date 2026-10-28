@@ -43,3 +43,7 @@ next-env.d.ts
 .env
 
 /media
+
+# local SQLite files (the project uses PostgreSQL)
+*.db
+*.db-journal
