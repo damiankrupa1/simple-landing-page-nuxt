@@ -3,10 +3,11 @@
  * @module Pages
  */
 
-import { HeroBlock } from '@/blocks/HeroBlock'
-import { ContentBlock } from '@/blocks/ContentBlock'
-import { CollectionConfig } from 'payload'
-import { NewsletterFormBlock } from '@/blocks/NewsletterFormBlock'
+import type { CollectionConfig } from 'payload'
+
+import { ContentBlock } from '../blocks/ContentBlock'
+import { HeroBlock } from '../blocks/HeroBlock'
+import { NewsletterFormBlock } from '../blocks/NewsletterFormBlock'
 
 /**
  * Pages collection configuration
@@ -35,16 +36,19 @@ const Pages: CollectionConfig = {
     {
       name: 'title',
       type: 'text',
+      localized: true,
       required: true,
     },
     {
       name: 'slug',
       type: 'text',
+      localized: true,
       required: true,
     },
     {
       name: 'layout',
       type: 'blocks',
+      localized: true,
       required: true,
       blocks: [HeroBlock, ContentBlock, NewsletterFormBlock],
     },

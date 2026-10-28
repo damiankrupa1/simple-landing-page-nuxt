@@ -12,10 +12,18 @@ import { buildConfig } from 'payload'
 import { fileURLToPath } from 'url'
 import sharp from 'sharp'
 
-import { Users } from './collections/Users'
 import { Media } from './collections/Media'
 import Pages from './collections/Pages'
 import { formBuilderPlugin } from '@payloadcms/plugin-form-builder'
+import { Users } from './collections/Users'
+import { Brands } from './globals/Brands'
+import { CampaignSlides } from './globals/CampaignSlides'
+import { CategoryTiles } from './globals/CategoryTiles'
+import { FooterContent } from './globals/FooterContent'
+import { JournalSection } from './globals/JournalSection'
+import { Navigation } from './globals/Navigation'
+import { ShopTheLook } from './globals/ShopTheLook'
+import { StudioStory } from './globals/StudioStory'
 import { migrations } from './migrations'
 import { s3StoragePlugin } from './storage/s3'
 
@@ -66,6 +74,20 @@ export default buildConfig({
     },
   },
   collections: [Users, Media, Pages],
+  globals: [
+    Navigation,
+    FooterContent,
+    StudioStory,
+    Brands,
+    JournalSection,
+    CampaignSlides,
+    CategoryTiles,
+    ShopTheLook,
+  ],
+  localization: {
+    locales: ['en', 'pl'],
+    defaultLocale: 'en',
+  },
   editor: lexicalEditor(),
   secret: process.env.PAYLOAD_SECRET || '',
   typescript: {

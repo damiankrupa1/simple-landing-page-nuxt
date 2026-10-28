@@ -3,7 +3,7 @@
  * @module ContentBlock
  */
 
-import { Block } from 'payload'
+import type { Block } from 'payload'
 
 /**
  * Content block configuration
@@ -21,11 +21,13 @@ export const ContentBlock: Block = {
     {
       name: 'heading',
       type: 'text',
+      localized: true,
       required: true,
     },
     {
       name: 'content',
       type: 'richText',
+      localized: true,
       required: true,
     },
   ],
