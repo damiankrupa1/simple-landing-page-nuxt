@@ -24,7 +24,7 @@ A modern landing page application using Nuxt.js for the frontend and Payload CMS
 ### Backend (payload-cms)
 
 - Payload CMS
-- SQLite Database
+- PostgreSQL Database
 - NextJS 15
 - TypeScript
 
@@ -38,7 +38,7 @@ npm install
 
 # Set up environment variables
 cp .env.example .env
-# Configure PAYLOAD_SECRET and DATABASE_URI
+# Configure PAYLOAD_SECRET and DATABASE_URL
 
 # Start development server
 npm run dev
