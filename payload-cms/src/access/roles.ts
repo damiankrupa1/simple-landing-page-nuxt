@@ -16,9 +16,15 @@ export type Role = (typeof ROLES)[number]
 export const normalizeRole = (value: unknown): Role =>
   typeof value === 'string' && (ROLES as readonly string[]).includes(value) ? (value as Role) : 'none'
 
-/** Role of a request user; no user, or a user of another collection without `role`, is `none`. */
-export const roleOf = (user: unknown): Role =>
-  user && typeof user === 'object' ? normalizeRole((user as { role?: unknown }).role) : 'none'
+/** Role of a request user; no user, or a user of another collection, is `none`. */
+export const roleOf = (user: unknown): Role => {
+  if (!user || typeof user !== 'object') return 'none'
+  const { collection, role } = user as { collection?: unknown; role?: unknown }
+  // Only `users` carry roles; an account of another auth collection (API key accounts) is `none` even if a
+  // field called `role` ever appears on it.
+  if (typeof collection === 'string' && collection !== 'users') return 'none'
+  return normalizeRole(role)
+}
 
 export const roleAtLeast = (role: Role, min: Role): boolean => ROLES.indexOf(role) >= ROLES.indexOf(min)
 

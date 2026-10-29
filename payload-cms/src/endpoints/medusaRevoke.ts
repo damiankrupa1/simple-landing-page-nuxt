@@ -1,4 +1,6 @@
-import type { Endpoint, TypedUser } from 'payload'
+import type { Endpoint } from 'payload'
+
+import type { User } from '../payload-types'
 
 import { parseRevokeClaims } from './ssoClaims.ts'
 import { REVOKE_AUDIENCE, clearSessions, consumeTokenId, verifyMedusaToken } from './ssoShared.ts'
@@ -33,7 +35,7 @@ export const medusaRevoke: Endpoint = {
     const { payload } = req
     if (!(await consumeTokenId(payload, jti, exp))) return fail(401, 'Token already used')
 
-    const user = await payload.db.findOne<TypedUser>({
+    const user = await payload.db.findOne<User>({
       collection: 'users',
       where: { medusaUserId: { equals: sub } },
       req,

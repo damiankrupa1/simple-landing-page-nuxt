@@ -1,5 +1,7 @@
 import { jwtVerify, type JWTPayload } from 'jose'
-import { ValidationError, type Payload, type PayloadRequest, type TypedUser } from 'payload'
+import { ValidationError, type Payload, type PayloadRequest } from 'payload'
+
+import type { User } from '../payload-types'
 
 export const SSO_ISSUER = 'medusa-admin'
 
@@ -52,7 +54,7 @@ export const consumeTokenId = async (payload: Payload, jti: string, exp: number)
 
 /** Ends every session of a user: their JWTs stop working immediately (the JWT strategy needs the sid). */
 export const clearSessions = async (payload: Payload, id: number | string, req?: PayloadRequest): Promise<void> => {
-  const user = await payload.db.findOne<TypedUser>({ collection: 'users', where: { id: { equals: id } }, req })
+  const user = await payload.db.findOne<User>({ collection: 'users', where: { id: { equals: id } }, req })
   if (!user) return
   user.sessions = []
   // Same as the logout operation: do not bump updatedAt for a session-only change.

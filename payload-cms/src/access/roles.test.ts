@@ -20,6 +20,8 @@ describe('roles', () => {
     assert.equal(roleOf(null), 'none')
     assert.equal(roleOf({}), 'none')
     assert.equal(roleOf({ role: 'publisher' }), 'publisher')
+    assert.equal(roleOf({ collection: 'users', role: 'editor' }), 'editor')
+    assert.equal(roleOf({ collection: 'service-users', role: 'admin' }), 'none')
   })
 
   it('orders roles by privilege', () => {
