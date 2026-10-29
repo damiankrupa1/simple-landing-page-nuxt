@@ -34,6 +34,18 @@ Medusa admin (`medusaDemo`, `apps/backend`) embeds this Payload admin in an ifra
 - `PAYLOAD_PUBLIC_SERVER_URL` must equal Payload's public origin or the CSRF allowlist rejects cookie-authenticated browser requests.
 - Known gap: when the Payload session expires inside the iframe the Payload login screen shows instead of refreshing SSO from Medusa (tracked in `damiankrupa1/medusaDemo` issue #19).
 
+## postMessage bridge (frame <-> Medusa host), protocol v1
+
+Implemented in `src/embed/protocol.ts` (hand-written validation, tested) and `src/components/embed/EmbedProvider.tsx`; active only when `PAYLOAD_EMBEDDED=true` and the page is framed. Envelope `{ ns: "payload-embed", v: 1, type, id?, payload }`, at most 2 KB, paths only `^/admin(/|$)` (no scheme, `//` or backslash), no tokens. The frame accepts a message only if `event.origin` is in the allow-list (`MEDUSA_ADMIN_URLS`) AND `event.source === window.parent`; unknown namespace/version/type/shape is ignored. The frame never uses `targetOrigin: "*"`: until the host answers `hello` it posts to each allow-listed origin.
+
+- Frame -> host: `ready {path, locale}`, `nav:changed {path, search}`, `session:expired {reason: expired|logout|inactivity}` (login, logout or inactivity page reached: the host ends the Medusa session and shows the Medusa login; the frame shows "Renewing your session..." and never the Payload form), `access:denied {path}` (role none, `/admin/unauthorized`), `resize {height}` (defined, not sent yet).
+- Host -> frame: `hello {lng}` (handshake, frame answers `ready`), `nav:goto {path}`, `locale:changed {lng}` (sets `payload-lng` cookie and refreshes), `session:logout` (POST `/api/users/logout`, then login page), `session:keepalive` (POST `/api/users/refresh-token` in place, no iframe remount; a failure is reported as `session:expired`).
+- Host duties (Medusa side): handshake, validate `event.origin` and `event.source === iframe.contentWindow`, call the revoke endpoint on logout, remount with a new token only when the session is really gone.
+
+## Chrome and the single-use SSO URL
+
+`withPayload` adds `Critical-CH` to every response; the first time a Chrome profile sees an origin it discards the response and repeats the request. For the single-use SSO token that repeat is a replay (401) and the session cookie of the first response is lost. `next.config.mjs` therefore sends an empty `Critical-CH` for `/api/users/sso/medusa` only. Verified with headless Chrome (before the fix: 302 then 401; after: one request, `/admin` loads).
+
 ## Shared S3 bucket
 
 Medusa (`@medusajs/file-s3`) and Payload can use one bucket with the same `S3_*` variables. Medusa writes `name-<ULID>.ext` at the bucket root with no prefix; keep Payload on `S3_PREFIX=payload`. Do not change the prefix once files exist (stored `url`s point at the old location), and do not add a prefix to Medusa. `S3_FILE_URL` is the public URL of the bucket and is the same for both; for Railway Buckets use `S3_REGION=auto`.
