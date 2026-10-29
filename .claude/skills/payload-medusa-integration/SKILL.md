@@ -10,13 +10,15 @@ Medusa admin (`medusaDemo`, `apps/backend`) embeds this Payload admin in an ifra
 ## SSO contract (do not change one side alone)
 
 - Endpoint: `GET /api/users/sso/medusa?token=<jwt>` (`src/endpoints/medusaSso.ts`, registered on the `users` collection).
-- Token: HS256 signed with the shared secret (`MEDUSA_SSO_SECRET` here = `PAYLOAD_SSO_SECRET` in Medusa), `iss: medusa-admin`, `aud: payload`, claims `exp`, `iat` and `email`; lifetime at most 120 s.
-- Result: 302 to `/admin` with the Payload auth cookie. Unknown emails are created with `ssoManaged: true` and a random password; existing accounts are signed in without changing their password.
-- Errors: 503 secret not configured, 400 token missing, 401 invalid/expired/too long. Every failure is explicit; never fall back to an unauthenticated session.
+- Token (contract v2): HS256 signed with the shared secret (`MEDUSA_SSO_SECRET` here = `PAYLOAD_SSO_SECRET` in Medusa), `iss: medusa-admin`, `aud: payload`, lifetime at most 120 s, claims `exp`, `iat`, `jti` (single use, recorded in the hidden `sso-token-uses` collection), `sub` (stable Medusa user id), `email`, `name` (optional), `role` (`none|viewer|editor|publisher|admin`; missing or unknown = `none`), `redirect` (optional path under `/admin`, anything else becomes `/admin`) and `lng` (optional `en|pl`, sets the `payload-lng` cookie).
+- Accounts: matched by `medusaUserId` (= `sub`) first; an unlinked account with the same email is linked once and keeps working; an account linked to another id or an email owned by another account is a 409 (never merged, never taken over). Medusa owns identity: email, name and role are overwritten at every sign-in and read-only in Payload. Role `none` is a 403 that also stores `none` on the linked account and ends its sessions.
+- Result: 302 to `redirect` with the Payload auth cookie. New accounts get `ssoManaged: true`, a random password and the token role.
+- Errors: 503 secret not configured, 400 token missing, 401 invalid/expired/too long/already used/missing claims, 403 role none, 409 account conflict. Every failure is explicit; never fall back to an unauthenticated session.
+- Deploy order: Medusa v2 tokens are a superset of v1 (an old Payload ignores the extra claims), so deploy Medusa first. A v1 token (no `sub`/`jti`) is rejected by this Payload.
 - Minting a test token (run inside `payload-cms/`, where `jose` is installed; secret from the environment, not from files you print):
 
   ```bash
-  node -e "import('jose').then(async({SignJWT})=>{const k=new TextEncoder().encode(process.env.MEDUSA_SSO_SECRET);console.log(await new SignJWT({email:'dev@example.com'}).setProtectedHeader({alg:'HS256'}).setIssuer('medusa-admin').setAudience('payload').setIssuedAt().setExpirationTime('60s').sign(k))})"
+  node -e "import('jose').then(async({SignJWT})=>{const k=new TextEncoder().encode(process.env.MEDUSA_SSO_SECRET);console.log(await new SignJWT({email:'dev@example.com',name:'Dev',role:'editor',lng:'en'}).setProtectedHeader({alg:'HS256'}).setIssuer('medusa-admin').setAudience('payload').setSubject('user_dev').setJti(crypto.randomUUID()).setIssuedAt().setExpirationTime('60s').sign(k))})"
   ```
 
 ## Iframe embedding

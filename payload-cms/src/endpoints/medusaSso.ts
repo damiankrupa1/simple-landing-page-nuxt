@@ -1,18 +1,22 @@
 import { randomBytes } from 'node:crypto'
-import { jwtVerify } from 'jose'
-import { getFieldsToSign, jwtSign, type Endpoint, type TypedUser } from 'payload'
-import { addSessionToUser, generatePayloadCookie } from 'payload/shared'
+import { getFieldsToSign, jwtSign, type Endpoint, type TypedUser, type Where } from 'payload'
+import { addSessionToUser, generateCookie, generatePayloadCookie, getCookieExpiration } from 'payload/shared'
 
-const MAX_TOKEN_LIFETIME_SECONDS = 120
+import { parseSsoClaims, resolveAccount, type Account } from './ssoClaims.ts'
+import { SSO_AUDIENCE, clearSessions, consumeTokenId, verifyMedusaToken } from './ssoShared.ts'
 
 const fail = (status: number, error: string) => Response.json({ error }, { status })
 
+const LNG_COOKIE_SECONDS = 365 * 24 * 60 * 60
+
 /**
- * Single sign-on for the Medusa admin dashboard.
+ * Single sign-on for the Medusa admin dashboard (contract v2).
  *
- * Medusa mints a short-lived HS256 JWT (`iss: medusa-admin`, `aud: payload`, `email` claim) signed
- * with MEDUSA_SSO_SECRET and sends the browser here. We verify it, find or create the matching
- * user, start a session and redirect to /admin with the regular Payload auth cookie.
+ * Medusa mints a short-lived HS256 JWT (`iss: medusa-admin`, `aud: payload`) signed with
+ * MEDUSA_SSO_SECRET with the claims `sub` (stable Medusa user id), `email`, `name`, `role`, `jti`
+ * (single use), `redirect` (path under /admin) and `lng` (en | pl). We verify it, link or create the
+ * matching account (Medusa owns e-mail, name and role, and they are overwritten at every sign-in),
+ * start a session and redirect with the regular Payload auth cookie.
  */
 export const medusaSso: Endpoint = {
   path: '/sso/medusa',
@@ -24,40 +28,58 @@ export const medusaSso: Endpoint = {
     const token = req.searchParams.get('token')
     if (!token) return fail(400, 'Missing token')
 
-    let email: string
-    try {
-      const { payload } = await jwtVerify(token, new TextEncoder().encode(secret), {
-        algorithms: ['HS256'],
-        issuer: 'medusa-admin',
-        audience: 'payload',
-        requiredClaims: ['exp', 'iat'],
-      })
-      if (typeof payload.email !== 'string' || !payload.email) throw new Error('missing email')
-      if (payload.exp! - payload.iat! > MAX_TOKEN_LIFETIME_SECONDS) throw new Error('token lives too long')
-      email = payload.email.toLowerCase()
-    } catch {
-      return fail(401, 'Invalid or expired token')
-    }
+    const verified = await verifyMedusaToken(token, secret, SSO_AUDIENCE)
+    const parsed = verified ? parseSsoClaims(verified) : null
+    if (!parsed?.ok) return fail(401, 'Invalid or expired token')
+    const claims = parsed.claims
 
     const { payload } = req
     const collectionConfig = payload.collections.users.config
 
-    // Accounts are matched by email. Medusa admins are trusted to be Payload admins, so an existing
-    // account (for example one created by hand) is signed in as is, without touching its password.
-    const lookup = () =>
-      payload.db.findOne<TypedUser>({ collection: 'users', where: { email: { equals: email } }, req })
-    let user = await lookup()
-    if (!user) {
+    // The token is only good once. A replay (for example from a Railway log line) is refused.
+    if (!(await consumeTokenId(payload, claims.jti, claims.exp))) return fail(401, 'Token already used')
+
+    const findOne = (where: Where) =>
+      payload.db.findOne<TypedUser & Account>({ collection: 'users', where, req })
+    const [byId, byEmail] = await Promise.all([
+      findOne({ medusaUserId: { equals: claims.sub } }),
+      findOne({ email: { equals: claims.email } }),
+    ])
+
+    // Default deny: no role in Medusa means no access. Take the role away from the linked account and end
+    // its sessions right away instead of waiting for them to expire.
+    if (claims.role === 'none') {
+      if (byId) {
+        await payload.update({ collection: 'users', id: byId.id, data: { role: 'none' }, overrideAccess: true })
+        await clearSessions(payload, byId.id)
+      }
+      return fail(403, 'No access: the Medusa user has no Payload role')
+    }
+
+    const decision = resolveAccount({ sub: claims.sub, byId, byEmail })
+    if (decision.action === 'conflict') {
+      payload.logger.warn({ sub: claims.sub, reason: decision.reason }, 'Medusa SSO refused: account conflict')
+      return fail(409, 'Account conflict: this Medusa user cannot be matched to a single Payload account')
+    }
+
+    // Medusa owns identity: e-mail, name and role are overwritten, and the account is linked to the Medusa id.
+    const identity = { email: claims.email, name: claims.name, role: claims.role, medusaUserId: claims.sub }
+    let userId: number | string
+    if (decision.action === 'create') {
       // The password is required by the auth collection but never used: SSO users sign in through Medusa.
-      await payload.create({
+      const created = await payload.create({
         collection: 'users',
-        // v1 tokens carry no role and every Medusa admin was a Payload admin so far; SSO v2 takes the token role.
-        data: { email, password: randomBytes(32).toString('hex'), ssoManaged: true, role: 'admin' },
+        data: { ...identity, password: randomBytes(32).toString('hex'), ssoManaged: true },
         overrideAccess: true,
       })
-      user = await lookup()
+      userId = created.id
+    } else {
+      userId = decision.account.id
+      await payload.update({ collection: 'users', id: userId, data: identity, overrideAccess: true })
     }
-    if (!user) return fail(500, 'Could not create the user')
+
+    const user = await findOne({ id: { equals: userId } })
+    if (!user) return fail(500, 'Could not load the user')
 
     // Same steps as payload.login(), minus the password check.
     const { sid } = await addSessionToUser({ collectionConfig, payload, req, user })
@@ -67,12 +89,29 @@ export const medusaSso: Endpoint = {
       tokenExpiration: collectionConfig.auth.tokenExpiration,
     })
 
-    const cookie = generatePayloadCookie({
-      collectionAuthConfig: payload.collections.users.config.auth,
-      cookiePrefix: payload.config.cookiePrefix,
-      token: sessionToken,
-    })
+    const authConfig = collectionConfig.auth
+    const headers = new Headers({ Location: claims.redirect })
+    headers.append(
+      'Set-Cookie',
+      generatePayloadCookie({ collectionAuthConfig: authConfig, cookiePrefix: payload.config.cookiePrefix, token: sessionToken }),
+    )
+    if (claims.lng) {
+      // Admin language, same flags as the session cookie because this runs inside a cross-site iframe.
+      headers.append(
+        'Set-Cookie',
+        generateCookie<false>({
+          name: `${payload.config.cookiePrefix}-lng`,
+          value: claims.lng,
+          domain: authConfig.cookies.domain ?? undefined,
+          expires: getCookieExpiration({ seconds: LNG_COOKIE_SECONDS }),
+          path: '/',
+          returnCookieAsObject: false,
+          sameSite: typeof authConfig.cookies.sameSite === 'string' ? authConfig.cookies.sameSite : undefined,
+          secure: authConfig.cookies.secure,
+        }),
+      )
+    }
 
-    return new Response(null, { status: 302, headers: { Location: '/admin', 'Set-Cookie': cookie } })
+    return new Response(null, { status: 302, headers })
   },
 }

@@ -15,6 +15,7 @@ import sharp from 'sharp'
 import { Media } from './collections/Media'
 import Pages from './collections/Pages'
 import { formBuilderPlugin } from '@payloadcms/plugin-form-builder'
+import { SsoTokenUses } from './collections/SsoTokenUses'
 import { Users } from './collections/Users'
 import { Brands } from './globals/Brands'
 import { CampaignSlides } from './globals/CampaignSlides'
@@ -74,7 +75,7 @@ export default buildConfig({
       collections: ['pages'],
     },
   },
-  collections: [Users, Media, Pages],
+  collections: [Users, Media, Pages, SsoTokenUses],
   globals: [
     Navigation,
     FooterContent,
