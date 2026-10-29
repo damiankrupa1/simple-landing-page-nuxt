@@ -499,6 +499,38 @@ export interface FormSubmission {
         id?: string | null;
       }[]
     | null;
+  /**
+   * Normalised (lowercase) e-mail of the submission. One per form (unique); older rows are empty.
+   */
+  email?: string | null;
+  /**
+   * The consent wording the visitor saw (label of the consent checkbox in the request locale).
+   */
+  consentText?: string | null;
+  /**
+   * SHA-256 of the consent wording: equal hashes mean the same text was shown.
+   */
+  consentHash?: string | null;
+  /**
+   * Locale of the request, so the wording can be found in the form.
+   */
+  consentLocale?: string | null;
+  /**
+   * Single-use discount code issued for this sign-up (newsletter forms only).
+   */
+  discountCode?: string | null;
+  /**
+   * Percent off the code gives.
+   */
+  discountPercent?: number | null;
+  /**
+   * The code stops working at this time.
+   */
+  discountExpiresAt?: string | null;
+  /**
+   * Set when the shop redeemed the code.
+   */
+  discountRedeemedAt?: string | null;
   updatedAt: string;
   createdAt: string;
 }
@@ -861,6 +893,14 @@ export interface FormSubmissionsSelect<T extends boolean = true> {
         value?: T;
         id?: T;
       };
+  email?: T;
+  consentText?: T;
+  consentHash?: T;
+  consentLocale?: T;
+  discountCode?: T;
+  discountPercent?: T;
+  discountExpiresAt?: T;
+  discountRedeemedAt?: T;
   updatedAt?: T;
   createdAt?: T;
 }

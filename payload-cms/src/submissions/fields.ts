@@ -15,7 +15,7 @@ export const stampFields: Field[] = [
   {
     name: 'email',
     type: 'text',
-    index: true,
+    // No own index: the unique (form, email) index in payload.config.ts serves the lookups.
     admin: serverSet('Normalised (lowercase) e-mail of the submission. One per form (unique); older rows are empty.'),
   },
   {
