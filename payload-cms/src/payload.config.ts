@@ -28,11 +28,14 @@ import { ShopTheLook } from './globals/ShopTheLook'
 import { StudioStory } from './globals/StudioStory'
 import { atLeast, isAdmin } from './access/roles'
 import { canCreateSubmission } from './access/submissionCreate'
+import { newsletterDiscountRedeem, newsletterDiscountValidate } from './endpoints/newsletterDiscount'
 import { isEmbedEnabled, parseAllowedOrigins } from './embed/config'
 import { migrations } from './migrations'
+import { issueDiscount } from './hooks/issueDiscount'
 import { stampSubmission } from './hooks/stampSubmission'
 import { validateFormSubmission } from './hooks/validateFormSubmission'
 import { s3StoragePlugin } from './storage/s3'
+import { discountFields } from './newsletter/discountFields'
 import { stampFields } from './submissions/fields'
 
 const filename = fileURLToPath(import.meta.url)
@@ -101,6 +104,7 @@ export default buildConfig({
     },
   },
   collections: [Users, Media, Pages, SsoTokenUses, ServiceUsers],
+  endpoints: [newsletterDiscountValidate, newsletterDiscountRedeem],
   globals: [
     Navigation,
     FooterContent,
@@ -141,11 +145,11 @@ export default buildConfig({
       },
       formSubmissionOverrides: {
         access: { create: canCreateSubmission, read: atLeast('editor'), delete: isAdmin },
-        fields: ({ defaultFields }) => [...defaultFields, ...stampFields],
+        fields: ({ defaultFields }) => [...defaultFields, ...stampFields, ...discountFields],
         // One sign-up per e-mail and form. Rows from before this index have no `email` (NULL), which a unique
         // index ignores, so they are neither checked nor rejected.
         indexes: [{ fields: ['form', 'email'], unique: true }],
-        hooks: { beforeValidate: [validateFormSubmission], beforeChange: [stampSubmission] },
+        hooks: { beforeValidate: [validateFormSubmission], beforeChange: [stampSubmission, issueDiscount] },
       },
     }),
   ],
