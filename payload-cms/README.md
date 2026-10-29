@@ -112,6 +112,22 @@ src/
 - Block type configurations
 - Form builder setup
 
+### Medusa admin embedding, roles and sessions
+
+The admin can run inside the Medusa admin (`/app/cms`) with one shared session. See
+`.claude/skills/payload-medusa-integration/SKILL.md` for the full contract.
+
+- `PAYLOAD_EMBEDDED=true` turns on embed mode: inside an iframe the user icon and logout buttons are hidden and the
+  session refreshes in the background; opened directly, `/admin` behaves as usual (the UI is hidden only when the flag is on
+  **and** the page is framed). The flag is read at runtime and passed to the browser as props, so changing it needs a
+  restart but **no rebuild** (it is deliberately not a `NEXT_PUBLIC_*` variable, which would be baked in at build time).
+  To roll back a bad deploy set it to `false` and redeploy; the iframe keeps working.
+- `MEDUSA_ADMIN_URLS` (comma separated, falls back to `MEDUSA_ADMIN_URL`) lists the origins allowed to embed the admin
+  (`frame-ancestors`) and to talk to it over `postMessage`.
+- Roles (`none|viewer|editor|publisher|admin`) come from Medusa in the SSO token and default to `none` (no access). Content
+  needs `editor` to change and `admin` to delete; public reads are unchanged. In an empty database the first user becomes admin.
+- Medusa ends the Payload session with `POST /api/users/sso/revoke` (server to server); SSO tokens are single use.
+
 ## Contributing
 
 1. Fork the repository
