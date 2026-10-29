@@ -5,6 +5,7 @@
 
 import type { CollectionConfig } from 'payload'
 
+import { atLeast, isAdmin } from '../access/roles'
 import { ContentBlock } from '../blocks/ContentBlock'
 import { HeroBlock } from '../blocks/HeroBlock'
 import { NewsletterFormBlock } from '../blocks/NewsletterFormBlock'
@@ -31,6 +32,9 @@ const Pages: CollectionConfig = {
   },
   access: {
     read: () => true,
+    create: atLeast('editor'),
+    update: atLeast('editor'),
+    delete: isAdmin,
   },
   fields: [
     {

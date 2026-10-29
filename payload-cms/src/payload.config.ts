@@ -25,6 +25,7 @@ import { JournalSection } from './globals/JournalSection'
 import { Navigation } from './globals/Navigation'
 import { ShopTheLook } from './globals/ShopTheLook'
 import { StudioStory } from './globals/StudioStory'
+import { atLeast, isAdmin } from './access/roles'
 import { migrations } from './migrations'
 import { validateFormSubmission } from './hooks/validateFormSubmission'
 import { s3StoragePlugin } from './storage/s3'
@@ -108,7 +109,13 @@ export default buildConfig({
     payloadCloudPlugin(),
     s3StoragePlugin(),
     formBuilderPlugin({
+      // `forms` stay publicly readable (the storefront renders them) and `form-submissions` stay publicly
+      // creatable (the newsletter box); everything else needs a role. Submissions hold visitors' emails.
+      formOverrides: {
+        access: { create: atLeast('editor'), update: atLeast('editor'), delete: isAdmin },
+      },
       formSubmissionOverrides: {
+        access: { read: atLeast('editor'), delete: isAdmin },
         hooks: { beforeValidate: [validateFormSubmission] },
       },
     }),

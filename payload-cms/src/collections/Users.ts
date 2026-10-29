@@ -3,10 +3,10 @@
  * @module Users
  */
 
-import type { CollectionConfig, FieldAccess } from 'payload'
+import { APIError, type Access, type CollectionConfig, type FieldAccess } from 'payload'
 import { medusaRevoke } from '../endpoints/medusaRevoke'
 import { medusaSso } from '../endpoints/medusaSso'
-import { ROLES, userAtLeast } from '../access/roles'
+import { ROLES, isAdmin, normalizeRole, roleOf, userAtLeast } from '../access/roles'
 
 /**
  * Users collection configuration
@@ -27,10 +27,43 @@ const cookieSameSite = process.env.PAYLOAD_COOKIE_SAMESITE === 'None' ? 'None' :
 /** Identity fields are owned by Medusa once the account is linked, so the account view shows them read-only. */
 const notLinkedToMedusa: FieldAccess = ({ doc }) => !doc?.medusaUserId
 
+/** Admins see and change every account; everybody else only their own. */
+const adminOrSelf: Access = ({ req: { user } }) => {
+  if (!user) return false
+  return roleOf(user) === 'admin' ? true : { id: { equals: user.id } }
+}
+
 export const Users: CollectionConfig = {
   slug: 'users',
   admin: {
     useAsTitle: 'email',
+  },
+  access: {
+    // Default deny: only a user with a role from Medusa gets into the admin panel (`none` sees /admin/unauthorized).
+    admin: ({ req }) => userAtLeast(req.user, 'viewer'),
+    create: isAdmin,
+    read: adminOrSelf,
+    update: adminOrSelf,
+    delete: isAdmin,
+  },
+  hooks: {
+    beforeChange: [
+      // A fresh database has no Medusa to hand out roles: the first account (create-first-user) becomes admin,
+      // otherwise it would be locked out of its own panel.
+      async ({ data, operation, req }) => {
+        if (operation !== 'create' || normalizeRole(data.role) !== 'none') return data
+        const { totalDocs } = await req.payload.count({ collection: 'users', overrideAccess: true, req })
+        return totalDocs === 0 ? { ...data, role: 'admin' } : data
+      },
+    ],
+    beforeLogin: [
+      // The password of a linked account is meaningless (random, never shown). Letting it sign in with one would
+      // create a session Medusa knows nothing about, so a Medusa logout or removal could not end it.
+      ({ user }) => {
+        if (user.medusaUserId) throw new APIError('This account signs in through the Medusa admin.', 403)
+        return user
+      },
+    ],
   },
   auth: {
     cookies: {

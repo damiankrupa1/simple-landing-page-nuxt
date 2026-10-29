@@ -1,5 +1,7 @@
 import type { GlobalConfig } from 'payload'
 
+import { atLeast } from '../access/roles'
+
 const localizedText = (name: string) => ({
   name,
   type: 'text' as const,
@@ -11,6 +13,8 @@ export const CampaignSlides: GlobalConfig = {
   slug: 'campaign-slides',
   access: {
     read: () => true,
+    // Writes need a role from Medusa; `read` stays public because the storefront depends on it.
+    update: atLeast('editor'),
   },
   fields: [
     {

@@ -22,6 +22,10 @@ Medusa admin (`medusaDemo`, `apps/backend`) embeds this Payload admin in an ifra
   node -e "import('jose').then(async({SignJWT})=>{const k=new TextEncoder().encode(process.env.MEDUSA_SSO_SECRET);console.log(await new SignJWT({email:'dev@example.com',name:'Dev',role:'editor',lng:'en'}).setProtectedHeader({alg:'HS256'}).setIssuer('medusa-admin').setAudience('payload').setSubject('user_dev').setJti(crypto.randomUUID()).setIssuedAt().setExpirationTime('60s').sign(k))})"
   ```
 
+## Roles and access (default deny)
+
+`users.role` is `none | viewer | editor | publisher | admin`, owned by Medusa (`user.metadata.payload_role` -> token `role`) and helpers live in `src/access/roles.ts` (`atLeast(min)`, `isAdmin`, `normalizeRole`). `users.access.admin` needs at least `viewer`, so `none` lands on `/admin/unauthorized`. Globals: `read` public (the storefront depends on it), `update` editor+. `pages`/`media`: create/update editor+, delete admin. `forms`: read public, writes editor+, delete admin; `form-submissions`: create public (newsletter), read editor+, delete admin. `users`: admin sees/changes everyone, others only themselves; linked accounts have read-only email/name/role and cannot sign in with a password (`beforeLogin`), so a Medusa logout or removal always ends their access. In an empty database the first account becomes admin. New collections must declare their own access, never rely on Payload's "any logged-in user" default.
+
 ## Iframe embedding
 
 - `src/middleware.ts` sends `Content-Security-Policy: frame-ancestors 'self' <origin of MEDUSA_ADMIN_URL>`; do not widen it to `*`.
