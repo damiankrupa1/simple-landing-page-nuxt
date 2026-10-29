@@ -46,6 +46,7 @@ Stack constraints: Node >= 22.13, pnpm 11.5.0 (pinned in `payload-cms/package.js
 - `PAYLOAD_PUBLIC_SERVER_URL` — public origin of this Payload instance. Browser requests carrying the auth cookie are only trusted when their `Origin` equals it; wrong value = admin renders logged in but uploads/saves fail with "You are not allowed to perform this action". Defaults to `https://$RAILWAY_PUBLIC_DOMAIN`, then localhost.
 - `FRONTEND_URL`, `NUXT_PUBLIC_PAYLOAD_URL` — CORS origins.
 - Medusa SSO and embedding: `MEDUSA_SSO_SECRET`, `MEDUSA_ADMIN_URLS` (or the single `MEDUSA_ADMIN_URL`), `PAYLOAD_EMBEDDED` (runtime flag, no rebuild), `PAYLOAD_COOKIE_SAMESITE`, `PAYLOAD_COOKIE_DOMAIN`. Roles live in `src/access/roles.ts`; every collection/global must declare its own access.
+- Storefront preview: `STOREFRONT_URL` (origin of nuxtMedusa) and `PREVIEW_SECRET` (signs the preview link, shared with the storefront); both optional, the Preview button hides without them. The storefront's API key is a `service-users` document, not a variable here.
 - S3 media: `S3_BUCKET`, `S3_ACCESS_KEY_ID`, `S3_SECRET_ACCESS_KEY`, `S3_ENDPOINT`, `S3_REGION`, `S3_FORCE_PATH_STYLE`, `S3_FILE_URL`, `S3_PREFIX`. Without the first three, uploads fall back to local disk, which is ephemeral on Railway.
 
 ## Payload conventions

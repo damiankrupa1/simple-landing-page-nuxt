@@ -3,6 +3,7 @@ import type { GlobalConfig } from 'payload'
 import { enforcePublishRole, globalRead, globalReadVersions, globalUpdate } from '../access/globalDrafts'
 
 import { validateStringArray } from './validators'
+import { globalPreview } from './preview'
 import { globalVersions } from './versions'
 
 const localizedText = (name: string) => ({
@@ -23,6 +24,7 @@ export const ShopTheLook: GlobalConfig = {
   },
   hooks: { beforeValidate: [enforcePublishRole] },
   versions: globalVersions,
+  admin: globalPreview('shop-the-look'),
   fields: [
     localizedText('eyebrow'),
     localizedText('headlineLine1'),

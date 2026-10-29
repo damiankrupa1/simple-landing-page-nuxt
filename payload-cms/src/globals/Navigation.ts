@@ -2,6 +2,7 @@ import type { GlobalConfig } from 'payload'
 
 import { enforcePublishRole, globalRead, globalReadVersions, globalUpdate } from '../access/globalDrafts'
 
+import { globalPreview } from './preview'
 import { globalVersions } from './versions'
 
 export const Navigation: GlobalConfig = {
@@ -15,6 +16,7 @@ export const Navigation: GlobalConfig = {
   },
   hooks: { beforeValidate: [enforcePublishRole] },
   versions: globalVersions,
+  admin: globalPreview('navigation'),
   fields: [
     {
       name: 'primaryNav',

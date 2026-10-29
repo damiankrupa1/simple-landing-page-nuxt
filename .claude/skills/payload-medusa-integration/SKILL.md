@@ -24,7 +24,7 @@ Medusa admin (`medusaDemo`, `apps/backend`) embeds this Payload admin in an ifra
 
 ## Roles and access (default deny)
 
-`users.role` is `none | viewer | editor | publisher | admin`, owned by Medusa (`user.metadata.payload_role` -> token `role`) and helpers live in `src/access/roles.ts` (`atLeast(min)`, `isAdmin`, `normalizeRole`). `users.access.admin` needs at least `viewer`, so `none` lands on `/admin/unauthorized`. Globals: `read` public (the storefront depends on it), `update` editor+. `pages`/`media`: create/update editor+, delete admin. `forms`: read public, writes editor+, delete admin; `form-submissions`: create public (newsletter), read editor+, delete admin. `users`: admin sees/changes everyone, others only themselves; linked accounts have read-only email/name/role and cannot sign in with a password (`beforeLogin`), so a Medusa logout or removal always ends their access. In an empty database the first account becomes admin. New collections must declare their own access, never rely on Payload's "any logged-in user" default.
+`users.role` is `none | viewer | editor | publisher | admin`, owned by Medusa (`user.metadata.payload_role` -> token `role`) and helpers live in `src/access/roles.ts` (`atLeast(min)`, `isAdmin`, `normalizeRole`). `users.access.admin` needs at least `viewer`, so `none` lands on `/admin/unauthorized`. Globals: drafts on; `read` is public but only matches the published document (staff and the `service-users` API key account read drafts), `update` editor+, publishing, unpublishing and restoring versions publisher+ (`src/access/globalDrafts.ts`). `pages`/`media`: create/update editor+, delete admin. `forms`: read public, writes editor+, delete admin; `form-submissions`: create public (newsletter), read editor+, delete admin. `users`: admin sees/changes everyone, others only themselves; linked accounts have read-only email/name/role and cannot sign in with a password (`beforeLogin`), so a Medusa logout or removal always ends their access. In an empty database the first account becomes admin. New collections must declare their own access, never rely on Payload's "any logged-in user" default.
 
 ## Iframe embedding
 
@@ -45,6 +45,23 @@ Implemented in `src/embed/protocol.ts` (hand-written validation, tested) and `sr
 ## Chrome and the single-use SSO URL
 
 `withPayload` adds `Critical-CH` to every response; the first time a Chrome profile sees an origin it discards the response and repeats the request. For the single-use SSO token that repeat is a replay (401) and the session cookie of the first response is lost. `next.config.mjs` therefore sends an empty `Critical-CH` for `/api/users/sso/medusa` only. Verified with headless Chrome (before the fix: 302 then 401; after: one request, `/admin` loads).
+
+## Drafts and storefront preview (nuxtMedusa#53)
+
+The 8 Globals have drafts. Roles: `editor` saves drafts (`POST /api/globals/<slug>?draft=true`), `publisher`+ publishes, unpublishes and restores versions. Anonymous reads (with or without `?draft=true`) return only the published document, or `{}` while nothing is published. Publishing publishes both locales at once.
+
+**Entry link** (built by Payload in `src/preview/previewUrl.ts`; shown as Live Preview pane and Preview button on each Global; needs `STOREFRONT_URL` and `PREVIEW_SECRET`, hidden without them):
+
+`GET {STOREFRONT_URL}/api/preview?token=<JWT>&locale=<en|pl>&path=/&global=<slug>`
+
+- Token: HS256 with `PREVIEW_SECRET` (the storefront needs the same value), `iss: payload-cms`, `aud: storefront-preview`, claims `sub` (Payload user id), `global`, `locale`, `iat`/`exp` quantized to the hour (valid 1 to 2 h; the URL must stay identical between renders or the admin reloads the iframe). It only proves that a signed-in editor asked for the preview. Invalid or expired: the storefront answers 401 and must not fall back to drafts.
+- `path` is always `/` today (every Global shows on the home page). The storefront redirects to the localized path and keeps preview mode (a cookie needs `SameSite=None; Secure` because the frame is cross-site).
+
+**Draft data** (storefront server only, never the browser): `GET {PAYLOAD}/api/globals/<slug>?locale=<l>&depth=<n>&draft=true` with `Authorization: service-users API-Key <key>`; same shape as the public contract plus `_status`. The key is a `service-users` document (created by an admin, no password, no role); its only extra permission is reading draft Globals (no versions, no writes, no other collection). Preview responses must be `private, no-store` and bypass the storefront proxy cache. Residual: Payload's built-in `payload-locked-documents` and `payload-preferences` accept any signed-in account, the service account included (lock metadata only; Payload does not let a config override them).
+
+**Frames and messages**: the preview iframe sits inside the Payload admin, which sits inside the Medusa admin, so the storefront's `frame-ancestors` must list the Payload origin and the Medusa admin origin (browsers check every ancestor). Inside the iframe the storefront must send `window.parent.postMessage({ type: 'payload-live-preview', ready: true }, <Payload origin>)`; Payload sends nothing until it sees that. After every save, Save draft or publish Payload posts `{ type: 'payload-document-event' }` (no data) to the iframe and the storefront refetches the draft (reload model). Accept messages only when `event.origin` equals the Payload origin. Payload also posts `payload-live-preview` data messages (`data`, `globalSlug`, `locale`); the reload model ignores them.
+
+The Preview button opens the same link in a new tab: no nested frames and first-party cookies, for browsers that block third-party cookies.
 
 ## Shared S3 bucket
 

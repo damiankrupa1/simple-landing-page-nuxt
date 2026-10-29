@@ -2,6 +2,7 @@ import type { GlobalConfig } from 'payload'
 
 import { enforcePublishRole, globalRead, globalReadVersions, globalUpdate } from '../access/globalDrafts'
 
+import { globalPreview } from './preview'
 import { globalVersions } from './versions'
 
 const localizedText = (name: string) => ({
@@ -22,6 +23,7 @@ export const CampaignSlides: GlobalConfig = {
   },
   hooks: { beforeValidate: [enforcePublishRole] },
   versions: globalVersions,
+  admin: globalPreview('campaign-slides'),
   fields: [
     {
       name: 'slides',

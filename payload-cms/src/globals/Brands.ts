@@ -3,6 +3,7 @@ import type { GlobalConfig } from 'payload'
 import { enforcePublishRole, globalRead, globalReadVersions, globalUpdate } from '../access/globalDrafts'
 
 import { validateStringArray } from './validators'
+import { globalPreview } from './preview'
 import { globalVersions } from './versions'
 
 export const Brands: GlobalConfig = {
@@ -16,6 +17,7 @@ export const Brands: GlobalConfig = {
   },
   hooks: { beforeValidate: [enforcePublishRole] },
   versions: globalVersions,
+  admin: globalPreview('brands'),
   fields: [
     {
       name: 'eyebrow',

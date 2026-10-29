@@ -128,6 +128,23 @@ The admin can run inside the Medusa admin (`/app/cms`) with one shared session. 
   needs `editor` to change and `admin` to delete; public reads are unchanged. In an empty database the first user becomes admin.
 - Medusa ends the Payload session with `POST /api/users/sso/revoke` (server to server); SSO tokens are single use.
 
+### Drafts, publishing and storefront preview
+
+The 8 home page Globals have drafts (`versions: { drafts: true, max: 30 }`, no autosave).
+
+- **Roles:** `editor` saves drafts, `publisher` (and `admin`) publishes, unpublishes and restores versions, `viewer` and
+  `none` cannot write. Enforced in `src/access/globalDrafts.ts` (a `beforeValidate` hook, so the admin can still show the
+  form to editors). Editors see the Publish button but get a 403 when they use it.
+- **Public reads stay published-only:** an anonymous `GET /api/globals/<slug>`, with or without `?draft=true`, returns the
+  published document. Before the first publication, or after Unpublish, it returns `{}` and the storefront falls back to its
+  static content. Publishing publishes both locales at once.
+- **Service account:** create one under *Service Users* (admin only), tick *Enable API key* and generate the key. It reads
+  drafts with `Authorization: service-users API-Key <key>` + `?draft=true` and cannot do anything else. The key belongs in the
+  storefront's server environment only. Rotating `PAYLOAD_SECRET` invalidates it.
+- **Preview:** `STOREFRONT_URL` and `PREVIEW_SECRET` (see `.env.example`) enable the Preview button and the Live Preview pane
+  on every global; both open `{STOREFRONT_URL}/api/preview?token=...`, see the `payload-medusa-integration` skill for the
+  contract. Without those variables the buttons are hidden.
+
 ## Contributing
 
 1. Fork the repository
