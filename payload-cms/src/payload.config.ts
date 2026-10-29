@@ -29,8 +29,10 @@ import { StudioStory } from './globals/StudioStory'
 import { atLeast, isAdmin } from './access/roles'
 import { isEmbedEnabled, parseAllowedOrigins } from './embed/config'
 import { migrations } from './migrations'
+import { stampSubmission } from './hooks/stampSubmission'
 import { validateFormSubmission } from './hooks/validateFormSubmission'
 import { s3StoragePlugin } from './storage/s3'
+import { stampFields } from './submissions/fields'
 
 const filename = fileURLToPath(import.meta.url)
 const dirname = path.dirname(filename)
@@ -137,7 +139,11 @@ export default buildConfig({
       },
       formSubmissionOverrides: {
         access: { read: atLeast('editor'), delete: isAdmin },
-        hooks: { beforeValidate: [validateFormSubmission] },
+        fields: ({ defaultFields }) => [...defaultFields, ...stampFields],
+        // One sign-up per e-mail and form. Rows from before this index have no `email` (NULL), which a unique
+        // index ignores, so they are neither checked nor rejected.
+        indexes: [{ fields: ['form', 'email'], unique: true }],
+        hooks: { beforeValidate: [validateFormSubmission], beforeChange: [stampSubmission] },
       },
     }),
   ],
