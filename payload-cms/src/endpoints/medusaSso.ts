@@ -51,7 +51,8 @@ export const medusaSso: Endpoint = {
       // The password is required by the auth collection but never used: SSO users sign in through Medusa.
       await payload.create({
         collection: 'users',
-        data: { email, password: randomBytes(32).toString('hex'), ssoManaged: true },
+        // v1 tokens carry no role and every Medusa admin was a Payload admin so far; SSO v2 takes the token role.
+        data: { email, password: randomBytes(32).toString('hex'), ssoManaged: true, role: 'admin' },
         overrideAccess: true,
       })
       user = await lookup()
