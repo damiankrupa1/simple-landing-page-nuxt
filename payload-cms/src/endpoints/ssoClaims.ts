@@ -104,3 +104,28 @@ export const resolveAccount = ({
   }
   return { action: 'create' }
 }
+
+export const REVOKE_ACTIONS = ['logout', 'revoke'] as const
+export type RevokeAction = (typeof REVOKE_ACTIONS)[number]
+
+export type RevokeClaims = { sub: string; jti: string; exp: number; action: RevokeAction }
+
+/**
+ * Claims of the server-to-server revocation token Medusa sends when a user logs out (`logout`: end the
+ * sessions) or is deleted/disabled/loses the role (`revoke`: end the sessions and set role none).
+ */
+export const parseRevokeClaims = (
+  payload: Record<string, unknown>,
+): { ok: true; claims: RevokeClaims } | { ok: false; reason: string } => {
+  const sub = text(payload.sub, 128)
+  const jti = text(payload.jti, 128)
+  if (!sub || !jti) return { ok: false, reason: 'missing sub or jti' }
+  if (!(REVOKE_ACTIONS as readonly string[]).includes(payload.action as string)) {
+    return { ok: false, reason: 'unknown action' }
+  }
+  if (typeof payload.exp !== 'number' || typeof payload.iat !== 'number') {
+    return { ok: false, reason: 'missing exp or iat' }
+  }
+  if (payload.exp - payload.iat > MAX_TOKEN_LIFETIME_SECONDS) return { ok: false, reason: 'token lives too long' }
+  return { ok: true, claims: { sub, jti, exp: payload.exp, action: payload.action as RevokeAction } }
+}

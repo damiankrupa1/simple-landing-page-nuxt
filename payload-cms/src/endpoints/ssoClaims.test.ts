@@ -1,7 +1,7 @@
 import assert from 'node:assert/strict'
 import { describe, it } from 'node:test'
 
-import { parseSsoClaims, resolveAccount, safeAdminRedirect } from './ssoClaims.ts'
+import { parseRevokeClaims, parseSsoClaims, resolveAccount, safeAdminRedirect } from './ssoClaims.ts'
 
 const base = { sub: 'user_1', jti: 'j1', email: ' Ann@Example.PL ', iat: 1000, exp: 1060, role: 'editor' }
 
@@ -106,5 +106,22 @@ describe('resolveAccount', () => {
 
   it('creates an account when nothing matches', () => {
     assert.deepEqual(resolveAccount({ sub: 'user_1', byId: null, byEmail: null }), { action: 'create' })
+  })
+})
+
+describe('parseRevokeClaims', () => {
+  const ok = { sub: 'user_1', jti: 'j1', action: 'logout', iat: 1000, exp: 1060 }
+
+  it('accepts logout and revoke', () => {
+    assert.ok(parseRevokeClaims(ok).ok)
+    const revoke = parseRevokeClaims({ ...ok, action: 'revoke' })
+    assert.ok(revoke.ok)
+    assert.equal(revoke.claims.action, 'revoke')
+  })
+
+  it('rejects anything else', () => {
+    for (const patch of [{ action: 'delete' }, { action: undefined }, { sub: undefined }, { jti: '' }, { exp: 2000 }]) {
+      assert.equal(parseRevokeClaims({ ...ok, ...patch }).ok, false, JSON.stringify(patch))
+    }
   })
 })

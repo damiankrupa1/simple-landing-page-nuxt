@@ -4,6 +4,7 @@
  */
 
 import type { CollectionConfig, FieldAccess } from 'payload'
+import { medusaRevoke } from '../endpoints/medusaRevoke'
 import { medusaSso } from '../endpoints/medusaSso'
 import { ROLES, userAtLeast } from '../access/roles'
 
@@ -39,7 +40,7 @@ export const Users: CollectionConfig = {
       domain: process.env.PAYLOAD_COOKIE_DOMAIN || undefined,
     },
   },
-  endpoints: [medusaSso],
+  endpoints: [medusaSso, medusaRevoke],
   fields: [
     // Email is added by auth; it is declared here only to make it read-only once linked to Medusa.
     { name: 'email', type: 'email', access: { update: notLinkedToMedusa } },
