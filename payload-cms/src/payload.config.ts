@@ -27,6 +27,7 @@ import { Navigation } from './globals/Navigation'
 import { ShopTheLook } from './globals/ShopTheLook'
 import { StudioStory } from './globals/StudioStory'
 import { atLeast, isAdmin } from './access/roles'
+import { canCreateSubmission } from './access/submissionCreate'
 import { isEmbedEnabled, parseAllowedOrigins } from './embed/config'
 import { migrations } from './migrations'
 import { stampSubmission } from './hooks/stampSubmission'
@@ -132,13 +133,14 @@ export default buildConfig({
     payloadCloudPlugin(),
     s3StoragePlugin(),
     formBuilderPlugin({
-      // `forms` stay publicly readable (the storefront renders them) and `form-submissions` stay publicly
-      // creatable (the newsletter box); everything else needs a role. Submissions hold visitors' emails.
+      // `forms` stay publicly readable (the storefront renders them). `form-submissions` are created only by the
+      // storefront server (shared token) or staff, see `access/submissionCreate`; everything else needs a role.
+      // Submissions hold visitors' emails.
       formOverrides: {
         access: { create: atLeast('editor'), update: atLeast('editor'), delete: isAdmin },
       },
       formSubmissionOverrides: {
-        access: { read: atLeast('editor'), delete: isAdmin },
+        access: { create: canCreateSubmission, read: atLeast('editor'), delete: isAdmin },
         fields: ({ defaultFields }) => [...defaultFields, ...stampFields],
         // One sign-up per e-mail and form. Rows from before this index have no `email` (NULL), which a unique
         // index ignores, so they are neither checked nor rejected.
