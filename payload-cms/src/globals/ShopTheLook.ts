@@ -1,8 +1,9 @@
 import type { GlobalConfig } from 'payload'
 
-import { atLeast } from '../access/roles'
+import { enforcePublishRole, globalRead, globalReadVersions, globalUpdate } from '../access/globalDrafts'
 
 import { validateStringArray } from './validators'
+import { globalVersions } from './versions'
 
 const localizedText = (name: string) => ({
   name,
@@ -13,11 +14,15 @@ const localizedText = (name: string) => ({
 
 export const ShopTheLook: GlobalConfig = {
   slug: 'shop-the-look',
+  // Drafts: the public read only matches the published document (see access/globalDrafts.ts), staff and the
+  // storefront service account can read drafts, editors save drafts, publishers publish.
   access: {
-    read: () => true,
-    // Writes need a role from Medusa; `read` stays public because the storefront depends on it.
-    update: atLeast('editor'),
+    read: globalRead,
+    readVersions: globalReadVersions,
+    update: globalUpdate,
   },
+  hooks: { beforeValidate: [enforcePublishRole] },
+  versions: globalVersions,
   fields: [
     localizedText('eyebrow'),
     localizedText('headlineLine1'),

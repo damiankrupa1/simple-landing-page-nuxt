@@ -850,6 +850,7 @@ export interface Navigation {
     url: string;
     id?: string | null;
   }[];
+  _status?: ('draft' | 'published') | null;
   updatedAt?: string | null;
   createdAt?: string | null;
 }
@@ -888,6 +889,7 @@ export interface FooterContent {
   social?: {
     handle?: string | null;
   };
+  _status?: ('draft' | 'published') | null;
   updatedAt?: string | null;
   createdAt?: string | null;
 }
@@ -919,6 +921,7 @@ export interface StudioStory {
   collectionLinkLabel: string;
   collectionUrl: string;
   image: number | Media;
+  _status?: ('draft' | 'published') | null;
   updatedAt?: string | null;
   createdAt?: string | null;
 }
@@ -943,6 +946,7 @@ export interface Brand {
     | number
     | boolean
     | null;
+  _status?: ('draft' | 'published') | null;
   updatedAt?: string | null;
   createdAt?: string | null;
 }
@@ -965,6 +969,7 @@ export interface JournalSection {
     url: string;
     id?: string | null;
   }[];
+  _status?: ('draft' | 'published') | null;
   updatedAt?: string | null;
   createdAt?: string | null;
 }
@@ -988,6 +993,7 @@ export interface CampaignSlide {
     image: number | Media;
     id?: string | null;
   }[];
+  _status?: ('draft' | 'published') | null;
   updatedAt?: string | null;
   createdAt?: string | null;
 }
@@ -1007,6 +1013,7 @@ export interface CategoryTile {
     image: number | Media;
     id?: string | null;
   }[];
+  _status?: ('draft' | 'published') | null;
   updatedAt?: string | null;
   createdAt?: string | null;
 }
@@ -1038,6 +1045,7 @@ export interface ShopTheLook {
     | boolean
     | null;
   image: number | Media;
+  _status?: ('draft' | 'published') | null;
   updatedAt?: string | null;
   createdAt?: string | null;
 }
@@ -1053,6 +1061,7 @@ export interface NavigationSelect<T extends boolean = true> {
         url?: T;
         id?: T;
       };
+  _status?: T;
   updatedAt?: T;
   createdAt?: T;
   globalType?: T;
@@ -1095,6 +1104,7 @@ export interface FooterContentSelect<T extends boolean = true> {
     | {
         handle?: T;
       };
+  _status?: T;
   updatedAt?: T;
   createdAt?: T;
   globalType?: T;
@@ -1115,6 +1125,7 @@ export interface StudioStorySelect<T extends boolean = true> {
   collectionLinkLabel?: T;
   collectionUrl?: T;
   image?: T;
+  _status?: T;
   updatedAt?: T;
   createdAt?: T;
   globalType?: T;
@@ -1128,6 +1139,7 @@ export interface BrandsSelect<T extends boolean = true> {
   viewAllLabel?: T;
   viewAllUrl?: T;
   otherBrands?: T;
+  _status?: T;
   updatedAt?: T;
   createdAt?: T;
   globalType?: T;
@@ -1152,6 +1164,7 @@ export interface JournalSectionSelect<T extends boolean = true> {
         url?: T;
         id?: T;
       };
+  _status?: T;
   updatedAt?: T;
   createdAt?: T;
   globalType?: T;
@@ -1177,6 +1190,7 @@ export interface CampaignSlidesSelect<T extends boolean = true> {
         image?: T;
         id?: T;
       };
+  _status?: T;
   updatedAt?: T;
   createdAt?: T;
   globalType?: T;
@@ -1198,6 +1212,7 @@ export interface CategoryTilesSelect<T extends boolean = true> {
         image?: T;
         id?: T;
       };
+  _status?: T;
   updatedAt?: T;
   createdAt?: T;
   globalType?: T;
@@ -1218,6 +1233,7 @@ export interface ShopTheLookSelect<T extends boolean = true> {
   sizeHint?: T;
   productHandles?: T;
   image?: T;
+  _status?: T;
   updatedAt?: T;
   createdAt?: T;
   globalType?: T;

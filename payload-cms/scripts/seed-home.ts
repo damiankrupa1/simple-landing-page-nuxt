@@ -191,7 +191,14 @@ async function seedGlobal(
         data[field] = withRowIds(data[field] as Row[], saved[field] as Row[])
       }
     }
-    saved = (await payload.updateGlobal({ slug, locale, data, depth: 0 })) as unknown as Row
+    // The Globals have drafts: without an explicit status a save keeps the stored one, and on a fresh database
+    // that is `draft`, which the public API does not return. The seed is published content.
+    saved = (await payload.updateGlobal({
+      slug,
+      locale,
+      data: { ...data, _status: 'published' },
+      depth: 0,
+    })) as unknown as Row
   }
   console.log(`  global ${slug}: en + pl`)
 }

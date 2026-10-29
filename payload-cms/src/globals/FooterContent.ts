@@ -1,6 +1,8 @@
 import type { GlobalConfig } from 'payload'
 
-import { atLeast } from '../access/roles'
+import { enforcePublishRole, globalRead, globalReadVersions, globalUpdate } from '../access/globalDrafts'
+
+import { globalVersions } from './versions'
 
 const linkFields = [
   {
@@ -18,11 +20,15 @@ const linkFields = [
 
 export const FooterContent: GlobalConfig = {
   slug: 'footer-content',
+  // Drafts: the public read only matches the published document (see access/globalDrafts.ts), staff and the
+  // storefront service account can read drafts, editors save drafts, publishers publish.
   access: {
-    read: () => true,
-    // Writes need a role from Medusa; `read` stays public because the storefront depends on it.
-    update: atLeast('editor'),
+    read: globalRead,
+    readVersions: globalReadVersions,
+    update: globalUpdate,
   },
+  hooks: { beforeValidate: [enforcePublishRole] },
+  versions: globalVersions,
   fields: [
     {
       name: 'helpLinks',

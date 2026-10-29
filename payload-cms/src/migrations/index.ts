@@ -4,6 +4,7 @@ import * as migration_20261027_195756_s3_storage from './20261027_195756_s3_stor
 import * as migration_20261028_105229_globals from './20261028_105229_globals';
 import * as migration_20261029_203821_users_roles_identity from './20261029_203821_users_roles_identity';
 import * as migration_20261029_204137_sso_token_uses from './20261029_204137_sso_token_uses';
+import * as migration_20261029_211004_globals_drafts from './20261029_211004_globals_drafts';
 
 export const migrations = [
   {
@@ -34,6 +35,11 @@ export const migrations = [
   {
     up: migration_20261029_204137_sso_token_uses.up,
     down: migration_20261029_204137_sso_token_uses.down,
-    name: '20261029_204137_sso_token_uses'
+    name: '20261029_204137_sso_token_uses',
+  },
+  {
+    up: migration_20261029_211004_globals_drafts.up,
+    down: migration_20261029_211004_globals_drafts.down,
+    name: '20261029_211004_globals_drafts'
   },
 ];

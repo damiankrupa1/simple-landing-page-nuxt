@@ -1,16 +1,21 @@
 import type { GlobalConfig } from 'payload'
 
-import { atLeast } from '../access/roles'
+import { enforcePublishRole, globalRead, globalReadVersions, globalUpdate } from '../access/globalDrafts'
 
 import { validateStringArray } from './validators'
+import { globalVersions } from './versions'
 
 export const StudioStory: GlobalConfig = {
   slug: 'studio-story',
+  // Drafts: the public read only matches the published document (see access/globalDrafts.ts), staff and the
+  // storefront service account can read drafts, editors save drafts, publishers publish.
   access: {
-    read: () => true,
-    // Writes need a role from Medusa; `read` stays public because the storefront depends on it.
-    update: atLeast('editor'),
+    read: globalRead,
+    readVersions: globalReadVersions,
+    update: globalUpdate,
   },
+  hooks: { beforeValidate: [enforcePublishRole] },
+  versions: globalVersions,
   fields: [
     {
       name: 'eyebrow',
