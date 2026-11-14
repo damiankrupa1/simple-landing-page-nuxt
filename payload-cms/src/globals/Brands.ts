@@ -43,7 +43,10 @@ export const Brands: GlobalConfig = {
       defaultValue: [],
       validate: validateStringArray,
       admin: {
-        description: 'Enter a JSON array of brand names.',
+        description: {
+          en: 'Enter a JSON array of brand names.',
+          pl: 'Wpisz tablicę JSON z nazwami marek.',
+        },
       },
     },
   ],

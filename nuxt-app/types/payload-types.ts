@@ -107,6 +107,8 @@ export interface Config {
     'campaign-slides': CampaignSlide;
     'category-tiles': CategoryTile;
     'shop-the-look': ShopTheLook;
+    'size-guide': SizeGuide;
+    'product-page-info': ProductPageInfo;
   };
   globalsSelect: {
     navigation: NavigationSelect<false> | NavigationSelect<true>;
@@ -117,6 +119,8 @@ export interface Config {
     'campaign-slides': CampaignSlidesSelect<false> | CampaignSlidesSelect<true>;
     'category-tiles': CategoryTilesSelect<false> | CategoryTilesSelect<true>;
     'shop-the-look': ShopTheLookSelect<false> | ShopTheLookSelect<true>;
+    'size-guide': SizeGuideSelect<false> | SizeGuideSelect<true>;
+    'product-page-info': ProductPageInfoSelect<false> | ProductPageInfoSelect<true>;
   };
   locale: 'en' | 'pl';
   widgets: {
@@ -1156,6 +1160,65 @@ export interface ShopTheLook {
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "size-guide".
+ */
+export interface SizeGuide {
+  id: number;
+  title: string;
+  /**
+   * Optional: how to measure.
+   */
+  intro?: string | null;
+  /**
+   * Measurement columns. State the unit in the label, for example "Chest (cm)".
+   */
+  columns: {
+    label: string;
+    id?: string | null;
+  }[];
+  /**
+   * One row per size, with one value for each column, in the same order as the columns.
+   */
+  rows: {
+    /**
+     * Must match the size option value in Medusa (XS, S, M, ...).
+     */
+    size: string;
+    /**
+     * Enter a JSON array of text values, one per column, for example ["88-92", "72-76"].
+     */
+    values:
+      | {
+          [k: string]: unknown;
+        }
+      | unknown[]
+      | string
+      | number
+      | boolean
+      | null;
+    id?: string | null;
+  }[];
+  _status?: ('draft' | 'published') | null;
+  updatedAt?: string | null;
+  createdAt?: string | null;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "product-page-info".
+ */
+export interface ProductPageInfo {
+  id: number;
+  freeShipping: string;
+  carriers: string;
+  returns: string;
+  priceNote?: string | null;
+  shippingTime?: string | null;
+  _status?: ('draft' | 'published') | null;
+  updatedAt?: string | null;
+  createdAt?: string | null;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
  * via the `definition` "navigation_select".
  */
 export interface NavigationSelect<T extends boolean = true> {
@@ -1338,6 +1401,46 @@ export interface ShopTheLookSelect<T extends boolean = true> {
   sizeHint?: T;
   productHandles?: T;
   image?: T;
+  _status?: T;
+  updatedAt?: T;
+  createdAt?: T;
+  globalType?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "size-guide_select".
+ */
+export interface SizeGuideSelect<T extends boolean = true> {
+  title?: T;
+  intro?: T;
+  columns?:
+    | T
+    | {
+        label?: T;
+        id?: T;
+      };
+  rows?:
+    | T
+    | {
+        size?: T;
+        values?: T;
+        id?: T;
+      };
+  _status?: T;
+  updatedAt?: T;
+  createdAt?: T;
+  globalType?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "product-page-info_select".
+ */
+export interface ProductPageInfoSelect<T extends boolean = true> {
+  freeShipping?: T;
+  carriers?: T;
+  returns?: T;
+  priceNote?: T;
+  shippingTime?: T;
   _status?: T;
   updatedAt?: T;
   createdAt?: T;

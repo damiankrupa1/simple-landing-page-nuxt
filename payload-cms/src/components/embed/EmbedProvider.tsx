@@ -18,7 +18,7 @@ type Mode = 'unknown' | 'frame' | 'direct'
 
 const TEXTS = {
   en: { renew: 'Renewing your session...', denied: 'You have no access to the CMS. Ask an administrator for a role.' },
-  pl: { renew: 'Odnawianie sesji...', denied: 'Brak dostepu do CMS. Popros administratora o role.' },
+  pl: { renew: 'Odnawianie sesji...', denied: 'Brak dostępu do CMS. Poproś administratora o rolę.' },
 }
 
 /**

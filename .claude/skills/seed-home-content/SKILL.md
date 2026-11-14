@@ -1,13 +1,13 @@
 ---
 name: seed-home-content
-description: Fill Payload with the home page content and images the nuxtMedusa storefront currently shows from its static i18n fallback (8 Globals, 10 images, en + pl), and the storefront-side follow-ups that live outside this repo. Use when the CMS is empty, when seeding a new Payload instance, or when the storefront still shows fallback content.
+description: Fill Payload with the home page content and images the nuxtMedusa storefront currently shows from its static i18n fallback (10 Globals, 10 images, en + pl), and the storefront-side follow-ups that live outside this repo. Use when the CMS is empty, when seeding a new Payload instance, or when the storefront still shows fallback content.
 ---
 
 # Seed the storefront home content
 
 The storefront (`nuxtMedusa`) already reads these Globals from Payload (`/api/globals/<slug>?locale=&depth=`) and falls back to its i18n JSON and `public/images/home/*` when Payload returns nothing. `scripts/seed-home.ts` copies exactly that fallback into Payload, so no storefront code change is needed for the content to appear. The contract is in `payload-backend-todo`.
 
-Covered: `navigation`, `footer-content`, `campaign-slides`, `category-tiles`, `shop-the-look`, `brands`, `studio-story`, `journal-section`, plus ten `media` documents (alt text in `en` and `pl`). Not covered: "New arrivals" (comes from Medusa) and any page that does not exist yet; every link is `/store`, the same default the storefront uses.
+Covered: `navigation`, `footer-content`, `campaign-slides`, `category-tiles`, `shop-the-look`, `brands`, `studio-story`, `journal-section`, `size-guide`, `product-page-info`, plus ten `media` documents (alt text in `en` and `pl`). The last two (product page, issue #28) are not read from the storefront: their copy (a size table with made-up measurements and the reassurance texts, en + pl) lives in `scripts/seed-home.ts`. Not covered: "New arrivals" (comes from Medusa) and any page that does not exist yet; every link is `/store`, the same default the storefront uses.
 
 ## Run
 
@@ -19,6 +19,7 @@ SEED_SOURCE=<path to the nuxtMedusa checkout> pnpm seed:home
 
 - It only reads the storefront, with `git show <ref>:<path>` (`SEED_REF`, default `origin/main`), so the working tree may be stale and nothing there is modified. Run `git fetch` in the checkout first.
 - It is idempotent: images are matched by filename and reused, Globals are overwritten with the same content. Re-running after an edit in the admin **overwrites the editor's changes** in those Globals, including unpublished drafts (the seed publishes: it passes `_status: 'published'`, because on a fresh database a save without a status would stay `draft` and the public API would return nothing). Both locales are published together.
+- The storefront on `main` no longer holds the i18n fallbacks or `public/images/home/*` (removed in `0a06534`), so the seed fails with `git show origin/main:public/images/...`. Point `SEED_REF` at the last commit that still has them, for example `SEED_REF=$(git -C <checkout> rev-parse '0a06534^')`.
 - `{title}` and `{'@'}` placeholders from the i18n files are resolved to the final text (`Fashion`, `@`), since Payload content is not a template.
 - Array rows are shared between locales: the `pl` pass must reuse the row ids from the `en` pass or the English values are lost. The script does this; keep it when editing.
 

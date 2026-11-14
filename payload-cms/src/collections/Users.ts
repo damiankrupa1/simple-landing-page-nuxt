@@ -86,7 +86,10 @@ export const Users: CollectionConfig = {
     {
       name: 'name',
       type: 'text',
-      admin: { description: 'Display name. Owned by Medusa for linked accounts (read-only there).' },
+      admin: { description: {
+          en: 'Display name. Owned by Medusa for linked accounts (read-only there).',
+          pl: 'Nazwa wyświetlana. Dla kont powiązanych z Medusą ustawia ją Medusa (tylko do odczytu).',
+        } },
       access: { update: notLinkedToMedusa },
     },
     {
@@ -95,7 +98,10 @@ export const Users: CollectionConfig = {
       defaultValue: false,
       admin: {
         readOnly: true,
-        description: 'Created by Medusa admin SSO (signs in through Medusa instead of a password).',
+        description: {
+          en: 'Created by Medusa admin SSO (signs in through Medusa instead of a password).',
+          pl: 'Utworzone przez logowanie SSO z panelu Medusy (konto loguje się przez Medusę, nie hasłem).',
+        },
       },
       access: { create: () => false, update: () => false },
     },
@@ -107,7 +113,10 @@ export const Users: CollectionConfig = {
       admin: {
         readOnly: true,
         position: 'sidebar',
-        description: 'Stable id of the Medusa user this account is linked to. Set by SSO, never by hand.',
+        description: {
+          en: 'Stable id of the Medusa user this account is linked to. Set by SSO, never by hand.',
+          pl: 'Stały identyfikator użytkownika Medusy, z którym powiązane jest to konto. Ustawiany przez SSO, nigdy ręcznie.',
+        },
       },
       access: { create: () => false, update: () => false },
     },
@@ -119,8 +128,10 @@ export const Users: CollectionConfig = {
       required: true,
       admin: {
         position: 'sidebar',
-        description:
-          'Owned by Medusa (`payload_role`) and refreshed at every SSO sign-in. `none` means no access. Only editable on accounts that are not linked to Medusa.',
+        description: {
+          en: 'Owned by Medusa (`payload_role`) and refreshed at every SSO sign-in. `none` means no access. Only editable on accounts that are not linked to Medusa.',
+          pl: 'Ustawiana przez Medusę (`payload_role`) i odświeżana przy każdym logowaniu SSO. `none` oznacza brak dostępu. Można ją zmienić tylko na kontach niepowiązanych z Medusą.',
+        },
       },
       access: {
         create: ({ req }) => userAtLeast(req.user, 'admin'),

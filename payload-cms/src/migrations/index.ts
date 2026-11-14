@@ -7,6 +7,7 @@ import * as migration_20261029_204137_sso_token_uses from './20261029_204137_sso
 import * as migration_20261029_211004_globals_drafts from './20261029_211004_globals_drafts';
 import * as migration_20261029_211311_service_users from './20261029_211311_service_users';
 import * as migration_20261029_212934_newsletter_signups from './20261029_212934_newsletter_signups';
+import * as migration_20261114_170046_size_guide_product_info from './20261114_170046_size_guide_product_info';
 
 export const migrations = [
   {
@@ -52,6 +53,11 @@ export const migrations = [
   {
     up: migration_20261029_212934_newsletter_signups.up,
     down: migration_20261029_212934_newsletter_signups.down,
-    name: '20261029_212934_newsletter_signups'
+    name: '20261029_212934_newsletter_signups',
+  },
+  {
+    up: migration_20261114_170046_size_guide_product_info.up,
+    down: migration_20261114_170046_size_guide_product_info.down,
+    name: '20261114_170046_size_guide_product_info'
   },
 ];

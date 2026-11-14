@@ -22,6 +22,13 @@ Medusa admin (`medusaDemo`, `apps/backend`) embeds this Payload admin in an ifra
   node -e "import('jose').then(async({SignJWT})=>{const k=new TextEncoder().encode(process.env.MEDUSA_SSO_SECRET);console.log(await new SignJWT({email:'dev@example.com',name:'Dev',role:'editor',lng:'en'}).setProtectedHeader({alg:'HS256'}).setIssuer('medusa-admin').setAudience('payload').setSubject('user_dev').setJti(crypto.randomUUID()).setIssuedAt().setExpirationTime('60s').sign(k))})"
   ```
 
+## Admin language (issue #16)
+
+- `payload.config.ts` has `i18n: { supportedLanguages: { en, pl }, fallbackLanguage: 'en' }` (`@payloadcms/translations/languages/en|pl`, direct dependency pinned to 3.92.0 like the other `@payloadcms` packages). Payload picks the panel language from the `payload-lng` cookie, then `Accept-Language`, then the fallback; an unsupported value falls back to English (to the next source, for a bad cookie).
+- Medusa sets it through the `lng` claim: the SSO 302 carries `Set-Cookie: payload-lng=<en|pl>` with the session cookie's flags (`SameSite`, `Secure`, domain). A missing, unknown or differently cased value (`xx`, `PL`) sets no cookie and the sign-in still succeeds. A language change while the page is open goes through the `locale:changed` message (cookie + refresh); a new `lng` in the SSO URL only applies on the next SSO.
+- Our own admin texts: field/collection descriptions and labels are `{ en, pl }` objects; embed screens in `EmbedProvider.tsx` read `<html lang>` (Payload sets it to the active admin language). New admin-facing text needs both languages. Not translated: collection/global names and the form-builder plugin's collection labels, developer-facing API errors and logs.
+- The content locale (`localization`, en/pl selector in the editor) is a separate concept and is deliberately NOT tied to `lng`: an editor of Polish copy may use the English panel and vice versa; the selector keeps the user's own choice (stored in Payload preferences).
+
 ## Roles and access (default deny)
 
 `users.role` is `none | viewer | editor | publisher | admin`, owned by Medusa (`user.metadata.payload_role` -> token `role`) and helpers live in `src/access/roles.ts` (`atLeast(min)`, `isAdmin`, `normalizeRole`). `users.access.admin` needs at least `viewer`, so `none` lands on `/admin/unauthorized`. Globals: drafts on; `read` is public but only matches the published document (staff and the `service-users` API key account read drafts), `update` editor+, publishing, unpublishing and restoring versions publisher+ (`src/access/globalDrafts.ts`). `pages`/`media`: create/update editor+, delete admin. `forms`: read public, writes editor+, delete admin; `form-submissions`: create public (newsletter), read editor+, delete admin. `users`: admin sees/changes everyone, others only themselves; linked accounts have read-only email/name/role and cannot sign in with a password (`beforeLogin`), so a Medusa logout or removal always ends their access. In an empty database the first account becomes admin. New collections must declare their own access, never rely on Payload's "any logged-in user" default.
@@ -49,7 +56,7 @@ Implemented in `src/embed/protocol.ts` (hand-written validation, tested) and `sr
 
 ## Drafts and storefront preview (nuxtMedusa#53)
 
-The 8 Globals have drafts. Roles: `editor` saves drafts (`POST /api/globals/<slug>?draft=true`), `publisher`+ publishes, unpublishes and restores versions. Anonymous reads (with or without `?draft=true`) return only the published document, or `{}` while nothing is published. Publishing publishes both locales at once.
+The 10 Globals have drafts. Roles: `editor` saves drafts (`POST /api/globals/<slug>?draft=true`), `publisher`+ publishes, unpublishes and restores versions. Anonymous reads (with or without `?draft=true`) return only the published document, or `{}` while nothing is published. Publishing publishes both locales at once.
 
 **Entry link** (built by Payload in `src/preview/previewUrl.ts`; shown as Live Preview pane and Preview button on each Global; needs `STOREFRONT_URL` and `PREVIEW_SECRET`, hidden without them):
 

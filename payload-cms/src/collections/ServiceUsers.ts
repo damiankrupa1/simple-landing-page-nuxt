@@ -20,7 +20,10 @@ export const ServiceUsers: CollectionConfig = {
   admin: {
     useAsTitle: 'name',
     hidden: ({ user }) => roleOf(user) !== 'admin',
-    description: 'API key accounts for the storefront preview. They can only read draft Globals.',
+    description: {
+      en: 'API key accounts for the storefront preview. They can only read draft Globals.',
+      pl: 'Konta z kluczem API dla podglądu sklepu. Mogą tylko czytać szkice Globali.',
+    },
   },
   auth: {
     useAPIKey: true,

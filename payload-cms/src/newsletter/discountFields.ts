@@ -1,6 +1,6 @@
 import type { Field } from 'payload'
 
-const serverSet = (description: string) => ({ readOnly: true, position: 'sidebar' as const, description })
+const serverSet = (description: Record<'en' | 'pl', string>) => ({ readOnly: true, position: 'sidebar' as const, description })
 
 /**
  * Discount code issued with a newsletter sign-up (`issueDiscount` sets every one of these on create and discards
@@ -14,9 +14,12 @@ export const discountFields: Field[] = [
     type: 'text',
     unique: true,
     index: true,
-    admin: serverSet('Single-use discount code issued for this sign-up (newsletter forms only).'),
+    admin: serverSet({
+      en: 'Single-use discount code issued for this sign-up (newsletter forms only).',
+      pl: 'Jednorazowy kod rabatowy wydany dla tego zapisu (tylko formularze newslettera).',
+    }),
   },
-  { name: 'discountPercent', type: 'number', admin: serverSet('Percent off the code gives.') },
-  { name: 'discountExpiresAt', type: 'date', admin: { ...serverSet('The code stops working at this time.'), date: { pickerAppearance: 'dayAndTime' } } },
-  { name: 'discountRedeemedAt', type: 'date', admin: { ...serverSet('Set when the shop redeemed the code.'), date: { pickerAppearance: 'dayAndTime' } } },
+  { name: 'discountPercent', type: 'number', admin: serverSet({ en: 'Percent off the code gives.', pl: 'Procent rabatu, jaki daje kod.' }) },
+  { name: 'discountExpiresAt', type: 'date', admin: { ...serverSet({ en: 'The code stops working at this time.', pl: 'Kod przestaje działać o tej porze.' }), date: { pickerAppearance: 'dayAndTime' } } },
+  { name: 'discountRedeemedAt', type: 'date', admin: { ...serverSet({ en: 'Set when the shop redeemed the code.', pl: 'Ustawiane, gdy sklep zrealizował kod.' }), date: { pickerAppearance: 'dayAndTime' } } },
 ]

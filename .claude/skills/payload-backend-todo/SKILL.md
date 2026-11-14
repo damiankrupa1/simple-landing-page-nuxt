@@ -82,6 +82,20 @@ Conventions used throughout:
 - **Type**: `CmsShopTheLook` in `app/types/cms.ts`; the resolved shape (`CmsShopTheLook & { products: StoreProduct[] }`) is `ResolvedShopTheLook` in `app/services/cms.service.ts`.
 - **Note**: Payload never stores price/stock — those always come live from the resolved Medusa products. A stale or typo'd handle just drops that product from the look instead of showing a broken price.
 
+## `SizeGuide` (Global) — implemented
+
+- **Slug**: `size-guide` (one table for the whole store, not per category).
+- **Fields**: `title` — localized text; `intro` — localized text, optional (how to measure); `columns` — array of `{ label: text (localized) }` (state the unit in the label, e.g. "Chest (cm)"); `rows` — array of `{ size: text, values: array of text }`. `size` is **not** localized and must match the Medusa size option value (XS, S, M, ...); `values` is a plain JSON array of strings (not `[{ value }]`), **not** localized, one entry per column in column order.
+- **Validation**: on publish, every row must have exactly as many `values` as there are `columns` (`validateSizeGuideRows`); drafts skip it. Fetch with `depth=0`.
+- **REST shape**: `{ title, intro?, columns: [{ id, label }], rows: [{ id, size, values: string[] }], _status }`. Before first publication the response is `{}`.
+- **Consumed by** (storefront, nuxtMedusa#58): the "Tabela rozmiarów" modal on the product page (`ProductSizeGuide`).
+
+## `ProductPageInfo` (Global) — implemented
+
+- **Slug**: `product-page-info`
+- **Fields**: `freeShipping`, `carriers`, `returns` — localized text, required; `priceNote`, `shippingTime` — localized text, optional (empty means hide the line). Fetch with `depth=0`.
+- **Consumed by** (storefront, nuxtMedusa#58): the reassurance block under the add-to-cart button. The help line reuses `FooterContent.contact.email`, so there is no field for it.
+
 ## Not yet implemented (see `missing-cms-content` for the product-side need)
 
 These are still mocked with static i18n/hardcoded content; no `cms.repository.ts` fetcher exists for them yet. Add the Payload Global/Collection and the matching entry above in the same change as the Nuxt fetcher, so this file never drifts from `cms.repository.ts`.

@@ -9,6 +9,8 @@ import { payloadCloudPlugin } from '@payloadcms/payload-cloud'
 import { lexicalEditor } from '@payloadcms/richtext-lexical'
 import path from 'path'
 import { buildConfig } from 'payload'
+import { en } from '@payloadcms/translations/languages/en'
+import { pl } from '@payloadcms/translations/languages/pl'
 import { fileURLToPath } from 'url'
 import sharp from 'sharp'
 
@@ -24,7 +26,9 @@ import { CategoryTiles } from './globals/CategoryTiles'
 import { FooterContent } from './globals/FooterContent'
 import { JournalSection } from './globals/JournalSection'
 import { Navigation } from './globals/Navigation'
+import { ProductPageInfo } from './globals/ProductPageInfo'
 import { ShopTheLook } from './globals/ShopTheLook'
+import { SizeGuide } from './globals/SizeGuide'
 import { StudioStory } from './globals/StudioStory'
 import { atLeast, isAdmin } from './access/roles'
 import { canCreateSubmission } from './access/submissionCreate'
@@ -119,9 +123,17 @@ export default buildConfig({
     CampaignSlides,
     CategoryTiles,
     ShopTheLook,
+    SizeGuide,
+    ProductPageInfo,
   ],
   // Errors Payload turns into a response (REST, GraphQL) go to Sentry through captureError; the response is unchanged.
   hooks: { afterError: [reportError] },
+  // Admin UI language (not the content locale below). The `payload-lng` cookie wins, then Accept-Language, then
+  // the fallback. Medusa SSO sets the cookie (`lng` claim). Our own texts use `{ en, pl }` labels/descriptions.
+  i18n: {
+    supportedLanguages: { en, pl },
+    fallbackLanguage: 'en',
+  },
   localization: {
     locales: ['en', 'pl'],
     defaultLocale: 'en',
