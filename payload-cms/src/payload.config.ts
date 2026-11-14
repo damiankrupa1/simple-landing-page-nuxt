@@ -9,6 +9,8 @@ import { payloadCloudPlugin } from '@payloadcms/payload-cloud'
 import { lexicalEditor } from '@payloadcms/richtext-lexical'
 import path from 'path'
 import { buildConfig } from 'payload'
+import { en } from '@payloadcms/translations/languages/en'
+import { pl } from '@payloadcms/translations/languages/pl'
 import { fileURLToPath } from 'url'
 import sharp from 'sharp'
 
@@ -115,6 +117,12 @@ export default buildConfig({
     CategoryTiles,
     ShopTheLook,
   ],
+  // Admin UI language (not the content locale below). The `payload-lng` cookie wins, then Accept-Language, then
+  // the fallback. Medusa SSO sets the cookie (`lng` claim). Our own texts use `{ en, pl }` labels/descriptions.
+  i18n: {
+    supportedLanguages: { en, pl },
+    fallbackLanguage: 'en',
+  },
   localization: {
     locales: ['en', 'pl'],
     defaultLocale: 'en',
