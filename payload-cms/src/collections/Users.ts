@@ -66,6 +66,10 @@ export const Users: CollectionConfig = {
     ],
   },
   auth: {
+    // Same length as the Medusa admin session (its default `sessionOptions.ttl`, 10 h). Payload's own default (2 h)
+    // ended the session of an idle embedded tab long before Medusa's did. The two clocks still start at different
+    // moments, so only the revoke endpoint makes both end together.
+    tokenExpiration: 10 * 60 * 60,
     cookies: {
       // 'None' cookies are only accepted when Secure.
       secure: process.env.NODE_ENV === 'production' || cookieSameSite === 'None',
