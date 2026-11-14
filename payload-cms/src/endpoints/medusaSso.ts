@@ -1,6 +1,8 @@
 import { randomBytes } from 'node:crypto'
-import { getFieldsToSign, jwtSign, type Endpoint, type TypedUser, type Where } from 'payload'
+import { getFieldsToSign, jwtSign, type Endpoint, type Where } from 'payload'
 import { addSessionToUser, generateCookie, generatePayloadCookie, getCookieExpiration } from 'payload/shared'
+
+import type { User } from '../payload-types'
 
 import { parseSsoClaims, resolveAccount, type Account } from './ssoClaims.ts'
 import { SSO_AUDIENCE, clearSessions, consumeTokenId, verifyMedusaToken } from './ssoShared.ts'
@@ -40,7 +42,7 @@ export const medusaSso: Endpoint = {
     if (!(await consumeTokenId(payload, claims.jti, claims.exp))) return fail(401, 'Token already used')
 
     const findOne = (where: Where) =>
-      payload.db.findOne<TypedUser & Account>({ collection: 'users', where, req })
+      payload.db.findOne<User & Account>({ collection: 'users', where, req })
     const [byId, byEmail] = await Promise.all([
       findOne({ medusaUserId: { equals: claims.sub } }),
       findOne({ email: { equals: claims.email } }),

@@ -64,6 +64,7 @@ export type SupportedTimezones =
 export interface Config {
   auth: {
     users: UserAuthOperations;
+    'service-users': ServiceUserAuthOperations;
   };
   blocks: {};
   collections: {
@@ -71,6 +72,7 @@ export interface Config {
     media: Media;
     pages: Page;
     'sso-token-uses': SsoTokenus;
+    'service-users': ServiceUser;
     forms: Form;
     'form-submissions': FormSubmission;
     'payload-kv': PayloadKv;
@@ -84,6 +86,7 @@ export interface Config {
     media: MediaSelect<false> | MediaSelect<true>;
     pages: PagesSelect<false> | PagesSelect<true>;
     'sso-token-uses': SsoTokenUsesSelect<false> | SsoTokenUsesSelect<true>;
+    'service-users': ServiceUsersSelect<false> | ServiceUsersSelect<true>;
     forms: FormsSelect<false> | FormsSelect<true>;
     'form-submissions': FormSubmissionsSelect<false> | FormSubmissionsSelect<true>;
     'payload-kv': PayloadKvSelect<false> | PayloadKvSelect<true>;
@@ -119,13 +122,31 @@ export interface Config {
   widgets: {
     collections: CollectionsWidget;
   };
-  user: User;
+  user: User | ServiceUser;
   jobs: {
     tasks: unknown;
     workflows: unknown;
   };
 }
 export interface UserAuthOperations {
+  forgotPassword: {
+    email: string;
+    password: string;
+  };
+  login: {
+    email: string;
+    password: string;
+  };
+  registerFirstUser: {
+    email: string;
+    password: string;
+  };
+  unlock: {
+    email: string;
+    password: string;
+  };
+}
+export interface ServiceUserAuthOperations {
   forgotPassword: {
     email: string;
     password: string;
@@ -448,6 +469,23 @@ export interface SsoTokenus {
   expiresAt: string;
 }
 /**
+ * API key accounts for the storefront preview. They can only read draft Globals.
+ *
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "service-users".
+ */
+export interface ServiceUser {
+  id: number;
+  name: string;
+  updatedAt: string;
+  createdAt: string;
+  enableAPIKey?: boolean | null;
+  apiKey?: string | null;
+  apiKeyIndex?: string | null;
+  hasAPIKey?: boolean | null;
+  collection: 'service-users';
+}
+/**
  * This interface was referenced by `Config`'s JSON-Schema
  * via the `definition` "form-submissions".
  */
@@ -461,6 +499,38 @@ export interface FormSubmission {
         id?: string | null;
       }[]
     | null;
+  /**
+   * Normalised (lowercase) e-mail of the submission. One per form (unique); older rows are empty.
+   */
+  email?: string | null;
+  /**
+   * The consent wording the visitor saw (label of the consent checkbox in the request locale).
+   */
+  consentText?: string | null;
+  /**
+   * SHA-256 of the consent wording: equal hashes mean the same text was shown.
+   */
+  consentHash?: string | null;
+  /**
+   * Locale of the request, so the wording can be found in the form.
+   */
+  consentLocale?: string | null;
+  /**
+   * Single-use discount code issued for this sign-up (newsletter forms only).
+   */
+  discountCode?: string | null;
+  /**
+   * Percent off the code gives.
+   */
+  discountPercent?: number | null;
+  /**
+   * The code stops working at this time.
+   */
+  discountExpiresAt?: string | null;
+  /**
+   * Set when the shop redeemed the code.
+   */
+  discountRedeemedAt?: string | null;
   updatedAt: string;
   createdAt: string;
 }
@@ -501,6 +571,10 @@ export interface PayloadLockedDocument {
         value: number | Page;
       } | null)
     | ({
+        relationTo: 'service-users';
+        value: number | ServiceUser;
+      } | null)
+    | ({
         relationTo: 'forms';
         value: number | Form;
       } | null)
@@ -509,10 +583,15 @@ export interface PayloadLockedDocument {
         value: number | FormSubmission;
       } | null);
   globalSlug?: string | null;
-  user: {
-    relationTo: 'users';
-    value: number | User;
-  };
+  user:
+    | {
+        relationTo: 'users';
+        value: number | User;
+      }
+    | {
+        relationTo: 'service-users';
+        value: number | ServiceUser;
+      };
   updatedAt: string;
   createdAt: string;
 }
@@ -522,10 +601,15 @@ export interface PayloadLockedDocument {
  */
 export interface PayloadPreference {
   id: number;
-  user: {
-    relationTo: 'users';
-    value: number | User;
-  };
+  user:
+    | {
+        relationTo: 'users';
+        value: number | User;
+      }
+    | {
+        relationTo: 'service-users';
+        value: number | ServiceUser;
+      };
   key?: string | null;
   value?:
     | {
@@ -649,6 +733,19 @@ export interface PagesSelect<T extends boolean = true> {
 export interface SsoTokenUsesSelect<T extends boolean = true> {
   jti?: T;
   expiresAt?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "service-users_select".
+ */
+export interface ServiceUsersSelect<T extends boolean = true> {
+  name?: T;
+  updatedAt?: T;
+  createdAt?: T;
+  enableAPIKey?: T;
+  apiKey?: T;
+  apiKeyIndex?: T;
+  hasAPIKey?: T;
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema
@@ -796,6 +893,14 @@ export interface FormSubmissionsSelect<T extends boolean = true> {
         value?: T;
         id?: T;
       };
+  email?: T;
+  consentText?: T;
+  consentHash?: T;
+  consentLocale?: T;
+  discountCode?: T;
+  discountPercent?: T;
+  discountExpiresAt?: T;
+  discountRedeemedAt?: T;
   updatedAt?: T;
   createdAt?: T;
 }
@@ -850,6 +955,7 @@ export interface Navigation {
     url: string;
     id?: string | null;
   }[];
+  _status?: ('draft' | 'published') | null;
   updatedAt?: string | null;
   createdAt?: string | null;
 }
@@ -888,6 +994,7 @@ export interface FooterContent {
   social?: {
     handle?: string | null;
   };
+  _status?: ('draft' | 'published') | null;
   updatedAt?: string | null;
   createdAt?: string | null;
 }
@@ -919,6 +1026,7 @@ export interface StudioStory {
   collectionLinkLabel: string;
   collectionUrl: string;
   image: number | Media;
+  _status?: ('draft' | 'published') | null;
   updatedAt?: string | null;
   createdAt?: string | null;
 }
@@ -943,6 +1051,7 @@ export interface Brand {
     | number
     | boolean
     | null;
+  _status?: ('draft' | 'published') | null;
   updatedAt?: string | null;
   createdAt?: string | null;
 }
@@ -965,6 +1074,7 @@ export interface JournalSection {
     url: string;
     id?: string | null;
   }[];
+  _status?: ('draft' | 'published') | null;
   updatedAt?: string | null;
   createdAt?: string | null;
 }
@@ -988,6 +1098,7 @@ export interface CampaignSlide {
     image: number | Media;
     id?: string | null;
   }[];
+  _status?: ('draft' | 'published') | null;
   updatedAt?: string | null;
   createdAt?: string | null;
 }
@@ -1007,6 +1118,7 @@ export interface CategoryTile {
     image: number | Media;
     id?: string | null;
   }[];
+  _status?: ('draft' | 'published') | null;
   updatedAt?: string | null;
   createdAt?: string | null;
 }
@@ -1038,6 +1150,7 @@ export interface ShopTheLook {
     | boolean
     | null;
   image: number | Media;
+  _status?: ('draft' | 'published') | null;
   updatedAt?: string | null;
   createdAt?: string | null;
 }
@@ -1053,6 +1166,7 @@ export interface NavigationSelect<T extends boolean = true> {
         url?: T;
         id?: T;
       };
+  _status?: T;
   updatedAt?: T;
   createdAt?: T;
   globalType?: T;
@@ -1095,6 +1209,7 @@ export interface FooterContentSelect<T extends boolean = true> {
     | {
         handle?: T;
       };
+  _status?: T;
   updatedAt?: T;
   createdAt?: T;
   globalType?: T;
@@ -1115,6 +1230,7 @@ export interface StudioStorySelect<T extends boolean = true> {
   collectionLinkLabel?: T;
   collectionUrl?: T;
   image?: T;
+  _status?: T;
   updatedAt?: T;
   createdAt?: T;
   globalType?: T;
@@ -1128,6 +1244,7 @@ export interface BrandsSelect<T extends boolean = true> {
   viewAllLabel?: T;
   viewAllUrl?: T;
   otherBrands?: T;
+  _status?: T;
   updatedAt?: T;
   createdAt?: T;
   globalType?: T;
@@ -1152,6 +1269,7 @@ export interface JournalSectionSelect<T extends boolean = true> {
         url?: T;
         id?: T;
       };
+  _status?: T;
   updatedAt?: T;
   createdAt?: T;
   globalType?: T;
@@ -1177,6 +1295,7 @@ export interface CampaignSlidesSelect<T extends boolean = true> {
         image?: T;
         id?: T;
       };
+  _status?: T;
   updatedAt?: T;
   createdAt?: T;
   globalType?: T;
@@ -1198,6 +1317,7 @@ export interface CategoryTilesSelect<T extends boolean = true> {
         image?: T;
         id?: T;
       };
+  _status?: T;
   updatedAt?: T;
   createdAt?: T;
   globalType?: T;
@@ -1218,6 +1338,7 @@ export interface ShopTheLookSelect<T extends boolean = true> {
   sizeHint?: T;
   productHandles?: T;
   image?: T;
+  _status?: T;
   updatedAt?: T;
   createdAt?: T;
   globalType?: T;

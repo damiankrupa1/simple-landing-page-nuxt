@@ -15,6 +15,7 @@ import sharp from 'sharp'
 import { Media } from './collections/Media'
 import Pages from './collections/Pages'
 import { formBuilderPlugin } from '@payloadcms/plugin-form-builder'
+import { ServiceUsers } from './collections/ServiceUsers'
 import { SsoTokenUses } from './collections/SsoTokenUses'
 import { Users } from './collections/Users'
 import { Brands } from './globals/Brands'
@@ -26,10 +27,16 @@ import { Navigation } from './globals/Navigation'
 import { ShopTheLook } from './globals/ShopTheLook'
 import { StudioStory } from './globals/StudioStory'
 import { atLeast, isAdmin } from './access/roles'
+import { canCreateSubmission } from './access/submissionCreate'
+import { newsletterDiscountRedeem, newsletterDiscountValidate } from './endpoints/newsletterDiscount'
 import { isEmbedEnabled, parseAllowedOrigins } from './embed/config'
 import { migrations } from './migrations'
+import { issueDiscount } from './hooks/issueDiscount'
+import { stampSubmission } from './hooks/stampSubmission'
 import { validateFormSubmission } from './hooks/validateFormSubmission'
 import { s3StoragePlugin } from './storage/s3'
+import { discountFields } from './newsletter/discountFields'
+import { stampFields } from './submissions/fields'
 
 const filename = fileURLToPath(import.meta.url)
 const dirname = path.dirname(filename)
@@ -96,7 +103,8 @@ export default buildConfig({
       collections: ['pages'],
     },
   },
-  collections: [Users, Media, Pages, SsoTokenUses],
+  collections: [Users, Media, Pages, SsoTokenUses, ServiceUsers],
+  endpoints: [newsletterDiscountValidate, newsletterDiscountRedeem],
   globals: [
     Navigation,
     FooterContent,
@@ -129,14 +137,19 @@ export default buildConfig({
     payloadCloudPlugin(),
     s3StoragePlugin(),
     formBuilderPlugin({
-      // `forms` stay publicly readable (the storefront renders them) and `form-submissions` stay publicly
-      // creatable (the newsletter box); everything else needs a role. Submissions hold visitors' emails.
+      // `forms` stay publicly readable (the storefront renders them). `form-submissions` are created only by the
+      // storefront server (shared token) or staff, see `access/submissionCreate`; everything else needs a role.
+      // Submissions hold visitors' emails.
       formOverrides: {
         access: { create: atLeast('editor'), update: atLeast('editor'), delete: isAdmin },
       },
       formSubmissionOverrides: {
-        access: { read: atLeast('editor'), delete: isAdmin },
-        hooks: { beforeValidate: [validateFormSubmission] },
+        access: { create: canCreateSubmission, read: atLeast('editor'), delete: isAdmin },
+        fields: ({ defaultFields }) => [...defaultFields, ...stampFields, ...discountFields],
+        // One sign-up per e-mail and form. Rows from before this index have no `email` (NULL), which a unique
+        // index ignores, so they are neither checked nor rejected.
+        indexes: [{ fields: ['form', 'email'], unique: true }],
+        hooks: { beforeValidate: [validateFormSubmission], beforeChange: [stampSubmission, issueDiscount] },
       },
     }),
   ],

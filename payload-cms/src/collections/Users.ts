@@ -29,7 +29,8 @@ const notLinkedToMedusa: FieldAccess = ({ doc }) => !doc?.medusaUserId
 
 /** Admins see and change every account; everybody else only their own. */
 const adminOrSelf: Access = ({ req: { user } }) => {
-  if (!user) return false
+  // Ids are per collection: an API key account (`service-users`) with id 1 must not match the user with id 1.
+  if (!user || user.collection !== 'users') return false
   return roleOf(user) === 'admin' ? true : { id: { equals: user.id } }
 }
 

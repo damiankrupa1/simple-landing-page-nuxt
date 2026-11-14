@@ -18,7 +18,7 @@ SEED_SOURCE=<path to the nuxtMedusa checkout> pnpm seed:home
 ```
 
 - It only reads the storefront, with `git show <ref>:<path>` (`SEED_REF`, default `origin/main`), so the working tree may be stale and nothing there is modified. Run `git fetch` in the checkout first.
-- It is idempotent: images are matched by filename and reused, Globals are overwritten with the same content. Re-running after an edit in the admin **overwrites the editor's changes** in those Globals.
+- It is idempotent: images are matched by filename and reused, Globals are overwritten with the same content. Re-running after an edit in the admin **overwrites the editor's changes** in those Globals, including unpublished drafts (the seed publishes: it passes `_status: 'published'`, because on a fresh database a save without a status would stay `draft` and the public API would return nothing). Both locales are published together.
 - `{title}` and `{'@'}` placeholders from the i18n files are resolved to the final text (`Fashion`, `@`), since Payload content is not a template.
 - Array rows are shared between locales: the `pl` pass must reuse the row ids from the `en` pass or the English values are lost. The script does this; keep it when editing.
 
