@@ -1,5 +1,7 @@
 import type { GlobalConfig } from 'payload'
 
+import { atLeast } from '../access/roles'
+
 import { validateStringArray } from './validators'
 
 const localizedText = (name: string) => ({
@@ -13,6 +15,8 @@ export const ShopTheLook: GlobalConfig = {
   slug: 'shop-the-look',
   access: {
     read: () => true,
+    // Writes need a role from Medusa; `read` stays public because the storefront depends on it.
+    update: atLeast('editor'),
   },
   fields: [
     localizedText('eyebrow'),

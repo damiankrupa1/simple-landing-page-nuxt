@@ -15,6 +15,7 @@ import sharp from 'sharp'
 import { Media } from './collections/Media'
 import Pages from './collections/Pages'
 import { formBuilderPlugin } from '@payloadcms/plugin-form-builder'
+import { SsoTokenUses } from './collections/SsoTokenUses'
 import { Users } from './collections/Users'
 import { Brands } from './globals/Brands'
 import { CampaignSlides } from './globals/CampaignSlides'
@@ -24,6 +25,8 @@ import { JournalSection } from './globals/JournalSection'
 import { Navigation } from './globals/Navigation'
 import { ShopTheLook } from './globals/ShopTheLook'
 import { StudioStory } from './globals/StudioStory'
+import { atLeast, isAdmin } from './access/roles'
+import { isEmbedEnabled, parseAllowedOrigins } from './embed/config'
 import { migrations } from './migrations'
 import { validateFormSubmission } from './hooks/validateFormSubmission'
 import { s3StoragePlugin } from './storage/s3'
@@ -42,6 +45,11 @@ const serverURL =
   (process.env.RAILWAY_PUBLIC_DOMAIN
     ? `https://${process.env.RAILWAY_PUBLIC_DOMAIN}`
     : 'http://localhost:3000')
+
+// Embed mode (the admin runs in an iframe of the Medusa admin). Read at runtime on the server and passed to the
+// client as props, so changing PAYLOAD_EMBEDDED needs a restart but no rebuild.
+const embedded = isEmbedEnabled(process.env)
+const embedOrigins = parseAllowedOrigins(process.env)
 
 /**
  * Payload CMS configuration
@@ -64,6 +72,20 @@ export default buildConfig({
   cors: [nuxtPayloadUrl ?? '', baseUrl ?? ''],
   admin: {
     user: Users.slug,
+    // Embedded: refresh the session in the background instead of asking "stay logged in?" (that modal has a
+    // log out button). The session still ends with the Medusa logout (revocation endpoint) or when the tab closes.
+    autoRefresh: embedded,
+    components: {
+      // Always registered (the import map is generated from the config, not from the environment); it does
+      // nothing unless `embedded` is true.
+      providers: [
+        {
+          path: '/components/embed/EmbedProvider',
+          exportName: 'EmbedProvider',
+          clientProps: { embedded, origins: embedOrigins },
+        },
+      ],
+    },
     importMap: {
       baseDir: path.resolve(dirname),
     },
@@ -74,7 +96,7 @@ export default buildConfig({
       collections: ['pages'],
     },
   },
-  collections: [Users, Media, Pages],
+  collections: [Users, Media, Pages, SsoTokenUses],
   globals: [
     Navigation,
     FooterContent,
@@ -107,7 +129,13 @@ export default buildConfig({
     payloadCloudPlugin(),
     s3StoragePlugin(),
     formBuilderPlugin({
+      // `forms` stay publicly readable (the storefront renders them) and `form-submissions` stay publicly
+      // creatable (the newsletter box); everything else needs a role. Submissions hold visitors' emails.
+      formOverrides: {
+        access: { create: atLeast('editor'), update: atLeast('editor'), delete: isAdmin },
+      },
       formSubmissionOverrides: {
+        access: { read: atLeast('editor'), delete: isAdmin },
         hooks: { beforeValidate: [validateFormSubmission] },
       },
     }),

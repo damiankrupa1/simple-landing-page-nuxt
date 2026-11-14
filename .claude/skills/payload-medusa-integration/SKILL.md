@@ -10,21 +10,42 @@ Medusa admin (`medusaDemo`, `apps/backend`) embeds this Payload admin in an ifra
 ## SSO contract (do not change one side alone)
 
 - Endpoint: `GET /api/users/sso/medusa?token=<jwt>` (`src/endpoints/medusaSso.ts`, registered on the `users` collection).
-- Token: HS256 signed with the shared secret (`MEDUSA_SSO_SECRET` here = `PAYLOAD_SSO_SECRET` in Medusa), `iss: medusa-admin`, `aud: payload`, claims `exp`, `iat` and `email`; lifetime at most 120 s.
-- Result: 302 to `/admin` with the Payload auth cookie. Unknown emails are created with `ssoManaged: true` and a random password; existing accounts are signed in without changing their password.
-- Errors: 503 secret not configured, 400 token missing, 401 invalid/expired/too long. Every failure is explicit; never fall back to an unauthenticated session.
+- Token (contract v2): HS256 signed with the shared secret (`MEDUSA_SSO_SECRET` here = `PAYLOAD_SSO_SECRET` in Medusa), `iss: medusa-admin`, `aud: payload`, lifetime at most 120 s, claims `exp`, `iat`, `jti` (single use, recorded in the hidden `sso-token-uses` collection), `sub` (stable Medusa user id), `email`, `name` (optional), `role` (`none|viewer|editor|publisher|admin`; missing or unknown = `none`), `redirect` (optional path under `/admin`, anything else becomes `/admin`) and `lng` (optional `en|pl`, sets the `payload-lng` cookie).
+- Accounts: matched by `medusaUserId` (= `sub`) first; an unlinked account with the same email is linked once and keeps working; an account linked to another id or an email owned by another account is a 409 (never merged, never taken over). Medusa owns identity: email, name and role are overwritten at every sign-in and read-only in Payload. Role `none` is a 403 that also stores `none` on the linked account and ends its sessions.
+- Result: 302 to `redirect` with the Payload auth cookie. New accounts get `ssoManaged: true`, a random password and the token role.
+- Errors: 503 secret not configured, 400 token missing, 401 invalid/expired/too long/already used/missing claims, 403 role none, 409 account conflict. Every failure is explicit; never fall back to an unauthenticated session.
+- Session revocation (server to server): `POST /api/users/sso/revoke` with `Authorization: Bearer <jwt>`, HS256 with the same secret, `iss: medusa-admin`, `aud: payload-session`, claims `sub`, `jti` (single use), `action` (`logout` ends the sessions; `revoke` also sets the role to `none`), lifetime at most 120 s. 200 `{revoked: true|false}` (an unknown `sub` is `false`), 401 for a missing/invalid/replayed token, 503 when the secret is missing. Medusa calls it on logout, on session expiry and when a user is deleted, disabled or loses the role.
+- Deploy order: Medusa v2 tokens are a superset of v1 (an old Payload ignores the extra claims), so deploy Medusa first. A v1 token (no `sub`/`jti`) is rejected by this Payload.
 - Minting a test token (run inside `payload-cms/`, where `jose` is installed; secret from the environment, not from files you print):
 
   ```bash
-  node -e "import('jose').then(async({SignJWT})=>{const k=new TextEncoder().encode(process.env.MEDUSA_SSO_SECRET);console.log(await new SignJWT({email:'dev@example.com'}).setProtectedHeader({alg:'HS256'}).setIssuer('medusa-admin').setAudience('payload').setIssuedAt().setExpirationTime('60s').sign(k))})"
+  node -e "import('jose').then(async({SignJWT})=>{const k=new TextEncoder().encode(process.env.MEDUSA_SSO_SECRET);console.log(await new SignJWT({email:'dev@example.com',name:'Dev',role:'editor',lng:'en'}).setProtectedHeader({alg:'HS256'}).setIssuer('medusa-admin').setAudience('payload').setSubject('user_dev').setJti(crypto.randomUUID()).setIssuedAt().setExpirationTime('60s').sign(k))})"
   ```
+
+## Roles and access (default deny)
+
+`users.role` is `none | viewer | editor | publisher | admin`, owned by Medusa (`user.metadata.payload_role` -> token `role`) and helpers live in `src/access/roles.ts` (`atLeast(min)`, `isAdmin`, `normalizeRole`). `users.access.admin` needs at least `viewer`, so `none` lands on `/admin/unauthorized`. Globals: `read` public (the storefront depends on it), `update` editor+. `pages`/`media`: create/update editor+, delete admin. `forms`: read public, writes editor+, delete admin; `form-submissions`: create public (newsletter), read editor+, delete admin. `users`: admin sees/changes everyone, others only themselves; linked accounts have read-only email/name/role and cannot sign in with a password (`beforeLogin`), so a Medusa logout or removal always ends their access. In an empty database the first account becomes admin. New collections must declare their own access, never rely on Payload's "any logged-in user" default.
 
 ## Iframe embedding
 
-- `src/middleware.ts` sends `Content-Security-Policy: frame-ancestors 'self' <origin of MEDUSA_ADMIN_URL>`; do not widen it to `*`.
+- `src/middleware.ts` sends `Content-Security-Policy: frame-ancestors 'self' <origins>` where the origins come from `MEDUSA_ADMIN_URLS` (comma separated) plus the legacy `MEDUSA_ADMIN_URL` (`src/embed/config.ts`; invalid entries are skipped); do not widen it to `*`. It does not depend on `PAYLOAD_EMBEDDED`.
+- Embed mode: `PAYLOAD_EMBEDDED=true` (read at runtime and passed to the client as props by `EmbedProvider`, so no rebuild; a restart is enough). With the flag on, server-rendered CSS (`src/embed/frame.ts`) hides the user icon (`.app-header__account`), the nav logout icon (`.nav__log-out`) and the unauthorized view's logout button until the page proves it is not framed (`window.self === window.top` sets `data-embed="direct"`), so a direct visit to `/admin` keeps its logout. `admin.autoRefresh` is on with the flag, so the "stay logged in?" modal (which has a log out button) never appears. A hard load of `/admin/logout` with `Sec-Fetch-Dest: iframe` is redirected to `/admin`. The REST `POST /api/users/logout` is deliberately not blocked: it cannot tell a frame (fetches send `Sec-Fetch-Dest: empty`), and a logout in the frame ends up as `session:expired` for the host anyway. Re-check the three CSS class names when upgrading Payload.
 - Cookies (`src/collections/Users.ts`): `PAYLOAD_COOKIE_SAMESITE=None` (implies `Secure`) is required while Payload and Medusa are on different registrable domains, which is the case for two `*.up.railway.app` hosts. The real fix is sibling subdomains of one domain plus `PAYLOAD_COOKIE_DOMAIN`, where `Lax` works. It is a workaround: browsers that block third-party cookies can still break it.
+- Session length: `auth.tokenExpiration` in `Users.ts` is 10 h, the default `sessionOptions.ttl` of the Medusa admin (framework 2.19.0, `rolling: false`, so Medusa's session ends 10 h after login whatever the activity). Keep the two in step if Medusa's `ttl` is ever changed. The clocks start at different moments (Payload at the SSO, Medusa at the login), so equal numbers do not end both sessions together: that needs the host to call the revoke endpoint when the Medusa session ends. Until it does, a Payload session can outlive the Medusa one.
 - `PAYLOAD_PUBLIC_SERVER_URL` must equal Payload's public origin or the CSRF allowlist rejects cookie-authenticated browser requests.
 - Known gap: when the Payload session expires inside the iframe the Payload login screen shows instead of refreshing SSO from Medusa (tracked in `damiankrupa1/medusaDemo` issue #19).
+
+## postMessage bridge (frame <-> Medusa host), protocol v1
+
+Implemented in `src/embed/protocol.ts` (hand-written validation, tested) and `src/components/embed/EmbedProvider.tsx`; active only when `PAYLOAD_EMBEDDED=true` and the page is framed. Envelope `{ ns: "payload-embed", v: 1, type, id?, payload }`, at most 2 KB, paths only `^/admin(/|$)` (no scheme, `//` or backslash), no tokens. The frame accepts a message only if `event.origin` is in the allow-list (`MEDUSA_ADMIN_URLS`) AND `event.source === window.parent`; unknown namespace/version/type/shape is ignored. The frame never uses `targetOrigin: "*"`: until the host answers `hello` it posts to each allow-listed origin.
+
+- Frame -> host: `ready {path, locale}`, `nav:changed {path, search}`, `session:expired {reason: expired|logout|inactivity}` (login, logout or inactivity page reached: the host ends the Medusa session and shows the Medusa login; the frame shows "Renewing your session..." and never the Payload form), `access:denied {path}` (role none, `/admin/unauthorized`), `resize {height}` (defined, not sent yet).
+- Host -> frame: `hello {lng}` (handshake, frame answers `ready`), `nav:goto {path}`, `locale:changed {lng}` (sets `payload-lng` cookie and refreshes), `session:logout` (POST `/api/users/logout`, then login page), `session:keepalive` (POST `/api/users/refresh-token` in place, no iframe remount; a failure is reported as `session:expired`).
+- Host duties (Medusa side): handshake, validate `event.origin` and `event.source === iframe.contentWindow`, call the revoke endpoint on logout, remount with a new token only when the session is really gone.
+
+## Chrome and the single-use SSO URL
+
+`withPayload` adds `Critical-CH` to every response; the first time a Chrome profile sees an origin it discards the response and repeats the request. For the single-use SSO token that repeat is a replay (401) and the session cookie of the first response is lost. `next.config.mjs` therefore sends an empty `Critical-CH` for `/api/users/sso/medusa` only. Verified with headless Chrome (before the fix: 302 then 401; after: one request, `/admin` loads).
 
 ## Shared S3 bucket
 

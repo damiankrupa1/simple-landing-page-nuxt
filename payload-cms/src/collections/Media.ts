@@ -5,6 +5,8 @@
 
 import type { CollectionConfig } from 'payload'
 
+import { atLeast, isAdmin } from '../access/roles'
+
 /**
  * Media collection configuration
  * Defines the structure and fields for media uploads in Payload CMS
@@ -21,6 +23,9 @@ export const Media: CollectionConfig = {
   slug: 'media',
   access: {
     read: () => true,
+    create: atLeast('editor'),
+    update: atLeast('editor'),
+    delete: isAdmin,
   },
   fields: [
     {

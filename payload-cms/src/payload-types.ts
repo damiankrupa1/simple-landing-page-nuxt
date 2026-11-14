@@ -70,6 +70,7 @@ export interface Config {
     users: User;
     media: Media;
     pages: Page;
+    'sso-token-uses': SsoTokenus;
     forms: Form;
     'form-submissions': FormSubmission;
     'payload-kv': PayloadKv;
@@ -82,6 +83,7 @@ export interface Config {
     users: UsersSelect<false> | UsersSelect<true>;
     media: MediaSelect<false> | MediaSelect<true>;
     pages: PagesSelect<false> | PagesSelect<true>;
+    'sso-token-uses': SsoTokenUsesSelect<false> | SsoTokenUsesSelect<true>;
     forms: FormsSelect<false> | FormsSelect<true>;
     'form-submissions': FormSubmissionsSelect<false> | FormSubmissionsSelect<true>;
     'payload-kv': PayloadKvSelect<false> | PayloadKvSelect<true>;
@@ -148,9 +150,21 @@ export interface UserAuthOperations {
 export interface User {
   id: number;
   /**
+   * Display name. Owned by Medusa for linked accounts (read-only there).
+   */
+  name?: string | null;
+  /**
    * Created by Medusa admin SSO (signs in through Medusa instead of a password).
    */
   ssoManaged?: boolean | null;
+  /**
+   * Stable id of the Medusa user this account is linked to. Set by SSO, never by hand.
+   */
+  medusaUserId?: string | null;
+  /**
+   * Owned by Medusa (`payload_role`) and refreshed at every SSO sign-in. `none` means no access. Only editable on accounts that are not linked to Medusa.
+   */
+  role: 'none' | 'viewer' | 'editor' | 'publisher' | 'admin';
   updatedAt: string;
   createdAt: string;
   email: string;
@@ -426,6 +440,15 @@ export interface Form {
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "sso-token-uses".
+ */
+export interface SsoTokenus {
+  id: number;
+  jti: string;
+  expiresAt: string;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
  * via the `definition` "form-submissions".
  */
 export interface FormSubmission {
@@ -532,7 +555,10 @@ export interface PayloadMigration {
  * via the `definition` "users_select".
  */
 export interface UsersSelect<T extends boolean = true> {
+  name?: T;
   ssoManaged?: T;
+  medusaUserId?: T;
+  role?: T;
   updatedAt?: T;
   createdAt?: T;
   email?: T;
@@ -615,6 +641,14 @@ export interface PagesSelect<T extends boolean = true> {
       };
   updatedAt?: T;
   createdAt?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "sso-token-uses_select".
+ */
+export interface SsoTokenUsesSelect<T extends boolean = true> {
+  jti?: T;
+  expiresAt?: T;
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema
