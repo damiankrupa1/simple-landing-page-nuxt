@@ -1,0 +1,29 @@
+# Keeps the build context small and keeps secrets out of every image layer. The Dockerfile installs
+# dependencies itself (deps stage) and runs `next build`, so none of the host's build output is needed.
+
+# Secrets: real .env files must never reach an image layer. Next's standalone output copies a .env it finds
+# in the build context into the final image, so this is not only about the builder stage. The build does not
+# read .env.example, so nothing is kept.
+**/.env*
+
+# Dependencies and build output are produced inside the image (host node_modules may even be for another OS)
+**/node_modules
+.next
+.pnpm-store
+out
+build
+coverage
+*.tsbuildinfo
+next-env.d.ts
+
+# Local uploads (S3 or ephemeral disk in production)
+media
+
+# Repository and editor files
+.git
+.gitignore
+.idea
+.vscode
+**/.DS_Store
+*.pem
+*.log
