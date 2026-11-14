@@ -57,7 +57,10 @@ export const StudioStory: GlobalConfig = {
       defaultValue: [],
       validate: validateStringArray,
       admin: {
-        description: 'Enter a JSON array of short value markers.',
+        description: {
+          en: 'Enter a JSON array of short value markers.',
+          pl: 'Wpisz tablicę JSON z krótkimi hasłami wartości.',
+        },
       },
     },
     {

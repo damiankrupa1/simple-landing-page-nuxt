@@ -42,7 +42,10 @@ export const ShopTheLook: GlobalConfig = {
       defaultValue: [],
       validate: validateStringArray,
       admin: {
-        description: 'Enter a JSON array of Medusa product handles.',
+        description: {
+          en: 'Enter a JSON array of Medusa product handles.',
+          pl: 'Wpisz tablicę JSON z handle produktów Medusy.',
+        },
       },
     },
     {

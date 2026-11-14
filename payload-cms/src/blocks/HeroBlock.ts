@@ -42,7 +42,7 @@ export const HeroBlock: Block = {
     },
     {
       name: 'cta_button',
-      label: 'CTA Button',
+      label: { en: 'CTA Button', pl: 'Przycisk CTA' },
       type: 'group',
       fields: [
         {
