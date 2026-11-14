@@ -19,7 +19,7 @@ description: Run or troubleshoot the Payload CMS app and the Nuxt landing page l
    pnpm dev
    ```
 
-   Only use the remote database when the user explicitly asks for it, and never run `pnpm migrate` against it without approval. `docker-compose.yml` is local-only: it never reads `payload-cms/.env` and has no app service in the default setup, so run `pnpm dev` on the host. If 5432 is taken, set `LOCAL_POSTGRES_PORT` (for example `LOCAL_POSTGRES_PORT=5436 docker compose up -d postgres`) and use the same port in `DATABASE_URL`.
+   Only use the remote database when the user explicitly asks for it, and never run `pnpm migrate` against it without approval. `docker-compose.yml` is local-only: it never reads `payload-cms/.env`, every value is set in the file, and the default `docker compose up` starts only Postgres (with a `pg_isready` healthcheck; `up -d --wait` returns once it is healthy). Run `pnpm dev` on the host. If 5432 is taken, set `LOCAL_POSTGRES_PORT` (for example `LOCAL_POSTGRES_PORT=5436 docker compose up -d postgres`) and use the same port in `DATABASE_URL`.
 3. Create the first admin through the UI on the first visit to `/admin`.
 4. Never print `.env` values when diagnosing; check that a variable is set, not what it contains.
 
