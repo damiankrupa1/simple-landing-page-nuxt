@@ -26,7 +26,9 @@ import { CategoryTiles } from './globals/CategoryTiles'
 import { FooterContent } from './globals/FooterContent'
 import { JournalSection } from './globals/JournalSection'
 import { Navigation } from './globals/Navigation'
+import { ProductPageInfo } from './globals/ProductPageInfo'
 import { ShopTheLook } from './globals/ShopTheLook'
+import { SizeGuide } from './globals/SizeGuide'
 import { StudioStory } from './globals/StudioStory'
 import { atLeast, isAdmin } from './access/roles'
 import { canCreateSubmission } from './access/submissionCreate'
@@ -116,6 +118,8 @@ export default buildConfig({
     CampaignSlides,
     CategoryTiles,
     ShopTheLook,
+    SizeGuide,
+    ProductPageInfo,
   ],
   // Admin UI language (not the content locale below). The `payload-lng` cookie wins, then Accept-Language, then
   // the fallback. Medusa SSO sets the cookie (`lng` claim). Our own texts use `{ en, pl }` labels/descriptions.
