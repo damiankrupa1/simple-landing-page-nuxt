@@ -49,7 +49,7 @@ Implemented in `src/embed/protocol.ts` (hand-written validation, tested) and `sr
 
 ## Drafts and storefront preview (nuxtMedusa#53)
 
-The 8 Globals have drafts. Roles: `editor` saves drafts (`POST /api/globals/<slug>?draft=true`), `publisher`+ publishes, unpublishes and restores versions. Anonymous reads (with or without `?draft=true`) return only the published document, or `{}` while nothing is published. Publishing publishes both locales at once.
+The 10 Globals have drafts. Roles: `editor` saves drafts (`POST /api/globals/<slug>?draft=true`), `publisher`+ publishes, unpublishes and restores versions. Anonymous reads (with or without `?draft=true`) return only the published document, or `{}` while nothing is published. Publishing publishes both locales at once.
 
 **Entry link** (built by Payload in `src/preview/previewUrl.ts`; shown as Live Preview pane and Preview button on each Global; needs `STOREFRONT_URL` and `PREVIEW_SECRET`, hidden without them):
 
