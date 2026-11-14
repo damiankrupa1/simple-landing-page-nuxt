@@ -1,18 +1,7 @@
+# Local-only stack. Nothing here reads payload-cms/.env (it may hold the production database URL and secrets);
+# every value is set in this file. Compose itself still reads .env in this folder for ${...} substitution, but
+# only for the LOCAL_* port variables below, which the real .env does not define.
 services:
-  payload:
-    image: node:22-alpine
-    ports:
-      - '3000:3000'
-    volumes:
-      - .:/home/node/app
-      - node_modules:/home/node/app/node_modules
-    working_dir: /home/node/app
-    command: sh -c "corepack enable && corepack prepare pnpm@11.5.0 --activate && pnpm install && pnpm dev"
-    depends_on:
-      - postgres
-    env_file:
-      - .env
-
   postgres:
     image: postgres:17
     environment:
@@ -20,10 +9,10 @@ services:
       POSTGRES_PASSWORD: postgres
       POSTGRES_DB: payload
     ports:
-      - '5432:5432'
+      # Loopback only: the credentials are the well-known postgres/postgres
+      - '127.0.0.1:${LOCAL_POSTGRES_PORT:-5432}:5432'
     volumes:
       - pgdata:/var/lib/postgresql/data
 
 volumes:
   pgdata:
-  node_modules:
