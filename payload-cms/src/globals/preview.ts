@@ -1,6 +1,7 @@
 import type { GlobalConfig } from 'payload'
 
 import { buildPreviewUrl } from '../preview/previewUrl'
+import { captureError } from '../utils/captureError'
 
 /**
  * Preview for a storefront Global: the Live Preview pane (iframe inside the admin, the storefront reloads on
@@ -9,8 +10,17 @@ import { buildPreviewUrl } from '../preview/previewUrl'
  * disappear without them. A preview link needs a signed-in staff member, so the URL is `null` for anyone else.
  */
 export const globalPreview = (slug: string): NonNullable<GlobalConfig['admin']> => {
-  const url = async (locale: string, user: { id?: number | string } | null | undefined) =>
-    user?.id === undefined ? null : buildPreviewUrl(process.env, { global: slug, locale, userId: user.id })
+  const url = async (locale: string, user: { id?: number | string } | null | undefined) => {
+    if (user?.id === undefined) return null
+    try {
+      return await buildPreviewUrl(process.env, { global: slug, locale, userId: user.id })
+    } catch (error) {
+      // Payload logs and swallows a failing preview URL (the buttons just disappear), so report it here. Rethrown
+      // so Payload keeps doing exactly that.
+      captureError(error, { source: 'preview', global: slug })
+      throw error
+    }
+  }
 
   return {
     livePreview: { url: ({ locale, req }) => url(locale.code, req.user) },

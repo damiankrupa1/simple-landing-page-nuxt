@@ -29,9 +29,11 @@ import { StudioStory } from './globals/StudioStory'
 import { atLeast, isAdmin } from './access/roles'
 import { canCreateSubmission } from './access/submissionCreate'
 import { newsletterDiscountRedeem, newsletterDiscountValidate } from './endpoints/newsletterDiscount'
+import { withErrorCapture } from './endpoints/withErrorCapture'
 import { isEmbedEnabled, parseAllowedOrigins } from './embed/config'
 import { migrations } from './migrations'
 import { issueDiscount } from './hooks/issueDiscount'
+import { reportError } from './hooks/reportError'
 import { stampSubmission } from './hooks/stampSubmission'
 import { validateFormSubmission } from './hooks/validateFormSubmission'
 import { s3StoragePlugin } from './storage/s3'
@@ -104,7 +106,10 @@ export default buildConfig({
     },
   },
   collections: [Users, Media, Pages, SsoTokenUses, ServiceUsers],
-  endpoints: [newsletterDiscountValidate, newsletterDiscountRedeem],
+  endpoints: [
+    withErrorCapture('newsletter-discount', newsletterDiscountValidate),
+    withErrorCapture('newsletter-discount', newsletterDiscountRedeem),
+  ],
   globals: [
     Navigation,
     FooterContent,
@@ -115,6 +120,8 @@ export default buildConfig({
     CategoryTiles,
     ShopTheLook,
   ],
+  // Errors Payload turns into a response (REST, GraphQL) go to Sentry through captureError; the response is unchanged.
+  hooks: { afterError: [reportError] },
   localization: {
     locales: ['en', 'pl'],
     defaultLocale: 'en',
