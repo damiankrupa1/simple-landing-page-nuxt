@@ -33,9 +33,11 @@ import { StudioStory } from './globals/StudioStory'
 import { atLeast, isAdmin } from './access/roles'
 import { canCreateSubmission } from './access/submissionCreate'
 import { newsletterDiscountRedeem, newsletterDiscountValidate } from './endpoints/newsletterDiscount'
+import { withErrorCapture } from './endpoints/withErrorCapture'
 import { isEmbedEnabled, parseAllowedOrigins } from './embed/config'
 import { migrations } from './migrations'
 import { issueDiscount } from './hooks/issueDiscount'
+import { reportError } from './hooks/reportError'
 import { stampSubmission } from './hooks/stampSubmission'
 import { validateFormSubmission } from './hooks/validateFormSubmission'
 import { s3StoragePlugin } from './storage/s3'
@@ -108,7 +110,10 @@ export default buildConfig({
     },
   },
   collections: [Users, Media, Pages, SsoTokenUses, ServiceUsers],
-  endpoints: [newsletterDiscountValidate, newsletterDiscountRedeem],
+  endpoints: [
+    withErrorCapture('newsletter-discount', newsletterDiscountValidate),
+    withErrorCapture('newsletter-discount', newsletterDiscountRedeem),
+  ],
   globals: [
     Navigation,
     FooterContent,
@@ -121,6 +126,8 @@ export default buildConfig({
     SizeGuide,
     ProductPageInfo,
   ],
+  // Errors Payload turns into a response (REST, GraphQL) go to Sentry through captureError; the response is unchanged.
+  hooks: { afterError: [reportError] },
   // Admin UI language (not the content locale below). The `payload-lng` cookie wins, then Accept-Language, then
   // the fallback. Medusa SSO sets the cookie (`lng` claim). Our own texts use `{ en, pl }` labels/descriptions.
   i18n: {
