@@ -168,6 +168,8 @@ type GlobalSlug =
   | 'brands'
   | 'studio-story'
   | 'journal-section'
+  | 'size-guide'
+  | 'product-page-info'
 
 /**
  * Array rows are shared between locales, only their localized fields differ. The `pl` pass must therefore
@@ -343,6 +345,57 @@ await seedGlobal(
   },
   ['articles'],
 )
+
+// ── Product page (copy from issue #28; the storefront has static mocks, not i18n keys to read) ──────────
+const SIZE_GUIDE = {
+  en: {
+    title: 'Size guide',
+    intro: 'Measure your body, not your clothes: chest at the fullest point, waist at the narrowest, hips at the widest. All measurements are body measurements in centimetres.',
+    columns: ['Chest (cm)', 'Waist (cm)', 'Hips (cm)'],
+  },
+  pl: {
+    title: 'Tabela rozmiarów',
+    intro: 'Zmierz swoje ciało, nie ubranie: klatkę piersiową w najszerszym miejscu, talię w najwęższym, biodra w najszerszym. Wszystkie wymiary to wymiary ciała w centymetrach.',
+    columns: ['Klatka piersiowa (cm)', 'Talia (cm)', 'Biodra (cm)'],
+  },
+}
+// One table for the whole store; `size` matches the Medusa size option value and is not localized.
+const SIZE_ROWS: Array<{ size: string; values: string[] }> = [
+  { size: 'XS', values: ['82-86', '64-68', '88-92'] },
+  { size: 'S', values: ['86-90', '68-72', '92-96'] },
+  { size: 'M', values: ['90-98', '72-80', '96-102'] },
+  { size: 'L', values: ['98-106', '80-88', '102-108'] },
+  { size: 'XL', values: ['106-114', '88-96', '108-114'] },
+]
+const PRODUCT_PAGE_INFO: Record<Locale, Row> = {
+  en: {
+    freeShipping: 'Free shipping over 399 PLN',
+    carriers: 'Courier or InPost. Choose what suits you.',
+    returns: '30 days for an easy return',
+    priceNote: 'Price includes VAT',
+    shippingTime: 'In stock · ships in 1-2 business days',
+  },
+  pl: {
+    freeShipping: 'Darmowa dostawa od 399 zł',
+    carriers: 'Kurier lub InPost. Wybierz tak, jak lubisz.',
+    returns: '30 dni na spokojny zwrot',
+    priceNote: 'Cena zawiera VAT',
+    shippingTime: 'Dostępny · wysyłka w 1–2 dni robocze',
+  },
+}
+
+await seedGlobal(
+  'size-guide',
+  (locale) => ({
+    title: SIZE_GUIDE[locale].title,
+    intro: SIZE_GUIDE[locale].intro,
+    columns: SIZE_GUIDE[locale].columns.map((label) => ({ label })),
+    rows: SIZE_ROWS.map((row) => ({ ...row })),
+  }),
+  ['columns', 'rows'],
+)
+
+await seedGlobal('product-page-info', (locale) => ({ ...PRODUCT_PAGE_INFO[locale] }))
 
 // ── Newsletter form ────────────────────────────────────────────────────────
 // Mirrors the storefront's newsletter box (email, two interests, consent). The form-builder plugin stores
