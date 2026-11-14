@@ -24,7 +24,9 @@ import { CategoryTiles } from './globals/CategoryTiles'
 import { FooterContent } from './globals/FooterContent'
 import { JournalSection } from './globals/JournalSection'
 import { Navigation } from './globals/Navigation'
+import { ProductPageInfo } from './globals/ProductPageInfo'
 import { ShopTheLook } from './globals/ShopTheLook'
+import { SizeGuide } from './globals/SizeGuide'
 import { StudioStory } from './globals/StudioStory'
 import { atLeast, isAdmin } from './access/roles'
 import { canCreateSubmission } from './access/submissionCreate'
@@ -114,6 +116,8 @@ export default buildConfig({
     CampaignSlides,
     CategoryTiles,
     ShopTheLook,
+    SizeGuide,
+    ProductPageInfo,
   ],
   localization: {
     locales: ['en', 'pl'],
