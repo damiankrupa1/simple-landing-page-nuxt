@@ -23,6 +23,18 @@ description: Run or troubleshoot the Payload CMS app and the Nuxt landing page l
 3. Create the first admin through the UI on the first visit to `/admin`.
 4. Never print `.env` values when diagnosing; check that a variable is set, not what it contains.
 
+### Optional: prod-like run from the Dockerfile
+
+To check what Railway runs (Next `standalone`, `node server.js`, migrations through `prodMigrations` on an empty database) without Railway:
+
+```bash
+cd payload-cms
+docker compose --profile prod up --build     # builds the Dockerfile, waits for Postgres, serves http://localhost:3000/admin/login
+docker compose --profile prod down -v        # removes containers and the local database volume
+```
+
+The `payload` service uses `DATABASE_URL` pointing at the compose Postgres and a dummy `PAYLOAD_SECRET`, both set in `docker-compose.yml` (no `env_file`). It is bound to `127.0.0.1`; set `LOCAL_PAYLOAD_PORT` to change the host port (`PAYLOAD_PUBLIC_SERVER_URL` follows it). Without `S3_*` uploads go to the container disk and are lost on removal. To try other variables (S3, Medusa SSO), add them under `environment:` of that service instead of loading `.env`. `.dockerignore` keeps `.env*` and `node_modules` out of the build context; after changing it, check that `docker run --rm --entrypoint ls <image> -a /app` shows no `.env`.
+
 ### Optional: S3 uploads locally
 
 Run a fake S3 (`docker run -d -p 9090:9090 -e initialBuckets=media adobe/s3mock`) and export `S3_BUCKET=media`, `S3_ACCESS_KEY_ID=x`, `S3_SECRET_ACCESS_KEY=x`, `S3_ENDPOINT=http://localhost:9090`, `S3_FORCE_PATH_STYLE=true` (optionally `S3_PREFIX=payload`). Upload an image in the admin and check the `url`; remove the containers afterwards.

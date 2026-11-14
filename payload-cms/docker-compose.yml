@@ -1,6 +1,9 @@
 # Local-only stack. Nothing here reads payload-cms/.env (it may hold the production database URL and secrets);
 # every value is set in this file. Compose itself still reads .env in this folder for ${...} substitution, but
 # only for the LOCAL_* port variables below, which the real .env does not define.
+#
+#   docker compose up -d postgres           # database only; run `pnpm dev` on the host against it
+#   docker compose --profile prod up --build   # also build the Dockerfile image and run it like Railway does
 services:
   postgres:
     image: postgres:17
@@ -19,6 +22,24 @@ services:
       timeout: 5s
       retries: 10
       start_period: 5s
+
+  # Prod-like app: the real Dockerfile (Next standalone, `node server.js`, migrations through prodMigrations).
+  # Only started with `--profile prod`; a plain `docker compose up` does not build or run it.
+  payload:
+    profiles: ['prod']
+    build:
+      context: .
+    ports:
+      - '127.0.0.1:${LOCAL_PAYLOAD_PORT:-3000}:3000'
+    depends_on:
+      postgres:
+        condition: service_healthy
+    # Explicit values only, no env_file. To try S3, Medusa SSO etc. locally, add variables here (see .env.example).
+    environment:
+      DATABASE_URL: postgresql://postgres:postgres@postgres:5432/payload
+      PAYLOAD_SECRET: local-dev-secret-not-for-production
+      # Browser requests are only trusted when their Origin equals this, so keep it equal to the published port
+      PAYLOAD_PUBLIC_SERVER_URL: http://localhost:${LOCAL_PAYLOAD_PORT:-3000}
 
 volumes:
   pgdata:
