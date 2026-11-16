@@ -1,5 +1,8 @@
 /**
- * @fileoverview The only module that talks to Sentry. Everything else reports through `captureError`.
+ * @fileoverview The only module of our code that talks to Sentry; everything else reports through `captureError`.
+ * The SDK itself also reports what our code never sees: errors thrown in Next route handlers and server components
+ * (wrapped by `withSentryConfig`), uncaught exceptions, and the traces. All of it goes through the same scrubbing
+ * (`sentry.utils.ts`).
  */
 import * as Sentry from '@sentry/nextjs'
 
@@ -14,7 +17,8 @@ export function initSentry(): void {
   if (options) Sentry.init(options)
 }
 
-// An error passed twice (a hook that reports and rethrows, then Next's onRequestError) is reported once.
+// An error passed twice (a hook that reports and rethrows, then Next's onRequestError) is reported once. Sentry
+// itself also skips an error object it already captured, whichever path came first.
 const reported = new WeakSet<object>()
 
 /**

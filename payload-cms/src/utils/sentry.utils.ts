@@ -122,12 +122,21 @@ export const scrubString = (value: string, secrets: readonly string[] = []): str
 export const scrubUrl = (url: string, secrets: readonly string[] = []): string =>
   scrubString(url.replace(/[?#].*$/, ''), secrets)
 
+/** Drops every `?query` inside a longer text (span names like `GET /api/users/sso/medusa?token=...`), then scrubs it. */
+export const scrubText = (value: string, secrets: readonly string[] = []): string =>
+  scrubString(value.replace(/\?[^\s#"']*/g, ''), secrets)
+
+/** SQL keeps its shape; string literals and the values of a failed query are masked. */
+export const scrubSql = (sql: string, secrets: readonly string[] = []): string =>
+  scrubString(sql.replace(/'(?:[^']|'')*'/g, "'?'"), secrets)
+
+// Keys whose string value is a URL or a path that may carry a query string.
+const URL_KEY = /(^|[._])(url|href|path|target|transaction)$|^(from|to)$/i
+
 /** Deep copy with sensitive keys filtered and every string scrubbed; `url`-like keys lose their query string. */
 export const scrubValue = (value: unknown, secrets: readonly string[] = [], key = '', depth = 0): unknown => {
   if (SENSITIVE_KEY.test(key)) return SENTRY_FILTERED
-  if (typeof value === 'string') {
-    return /^(url|from|to|href|path|transaction)$/i.test(key) ? scrubUrl(value, secrets) : scrubString(value, secrets)
-  }
+  if (typeof value === 'string') return URL_KEY.test(key) ? scrubUrl(value, secrets) : scrubString(value, secrets)
   if (typeof value !== 'object' || value === null) return value
   if (depth >= MAX_DEPTH) return SENTRY_FILTERED
   if (Array.isArray(value)) return value.map((item) => scrubValue(item, secrets, key, depth + 1))
@@ -136,6 +145,57 @@ export const scrubValue = (value: unknown, secrets: readonly string[] = [], key 
   )
 }
 
+const HEADER_ATTRIBUTE = /^http\.(request|response)\.header\.(.+)$/i
+const QUERY_ATTRIBUTE = /(^|\.)(query|fragment)$/i
+const DB_TEXT_ATTRIBUTE = /^db\.(statement|query\.text)$/i
+const DB_VALUES_ATTRIBUTE = /(^|\.)(values|params|parameters?)(\.|$)/i
+
+// Header attributes outside the allowlist are removed with their name (which tells that a token was sent).
+const isDroppedAttribute = (key: string): boolean => {
+  const name = HEADER_ATTRIBUTE.exec(key)?.[2]
+  return name !== undefined && !ALLOWED_HEADERS.includes(name.toLowerCase().replace(/_/g, '-'))
+}
+
+const scrubAttribute = (key: string, value: unknown, secrets: readonly string[]): unknown => {
+  if (HEADER_ATTRIBUTE.test(key)) return scrubValue(value, secrets)
+  if (QUERY_ATTRIBUTE.test(key) || DB_VALUES_ATTRIBUTE.test(key) || SENSITIVE_KEY.test(key)) return SENTRY_FILTERED
+  if (typeof value === 'string') {
+    if (DB_TEXT_ATTRIBUTE.test(key)) return scrubSql(value, secrets)
+    if (/connection_string$/i.test(key)) return scrubUrl(value, secrets)
+    return scrubText(value, secrets)
+  }
+  if (Array.isArray(value)) return value.map((item) => (typeof item === 'string' ? scrubText(item, secrets) : item))
+  return scrubValue(value, secrets, key)
+}
+
+/**
+ * Span attributes (`span.data`, `contexts.trace.data`): request and response headers except a harmless few are
+ * removed with their names; query strings (`url.query`, `http.query`) and bound database values are filtered; URLs
+ * and span names (`url.full`, `http.url`, `http.target`, `next.span_name`, ...) lose their query string; SQL (`db.statement`,
+ * `db.query.text`) loses its string literals; credentials leave connection strings; everything is scrubbed.
+ */
+export const scrubSpanData = (
+  data: Record<string, unknown> | undefined,
+  secrets: readonly string[] = [],
+): Record<string, unknown> | undefined =>
+  data &&
+  Object.fromEntries(
+    Object.entries(data)
+      .filter(([key]) => !isDroppedAttribute(key))
+      .map(([key, value]) => [key, scrubAttribute(key, value, secrets)]),
+  )
+
+type SpanLike = { description?: string; op?: string; data?: Record<string, unknown> }
+
+/** One span of a transaction: its description (an URL, a route or SQL) and its attributes. */
+export const scrubSpan = <S extends SpanLike>(span: S, secrets: readonly string[] = []): S => ({
+  ...span,
+  ...(span.description && {
+    description: span.op?.startsWith('db') ? scrubSql(span.description, secrets) : scrubText(span.description, secrets),
+  }),
+  ...(span.data && { data: scrubSpanData(span.data, secrets) }),
+})
+
 /** `beforeBreadcrumb`: scrubs the message and the data (an http breadcrumb's `url` loses its query string). */
 export const scrubBreadcrumb = (breadcrumb: Breadcrumb, secrets: readonly string[] = []): Breadcrumb => ({
   ...breadcrumb,
@@ -143,12 +203,15 @@ export const scrubBreadcrumb = (breadcrumb: Breadcrumb, secrets: readonly string
   ...(breadcrumb.data && { data: scrubValue(breadcrumb.data, secrets) as Breadcrumb['data'] }),
 })
 
+type TransactionEvent = Parameters<NonNullable<NodeOptions['beforeSendTransaction']>>[0]
+
 /**
- * `beforeSend`. An event leaves with no user, no request body, cookies, query string or environment, only a few
- * harmless headers, no local variables, and with secrets, e-mails, tokens and discount codes masked in messages,
- * exception values, URLs, tags, contexts, extra data and breadcrumbs. Returns a scrubbed copy.
+ * `beforeSend` and `beforeSendTransaction`. An event leaves with no user, no request body, cookies, query string or
+ * environment, only a few harmless headers, no local variables, and with secrets, e-mails, tokens and discount
+ * codes masked in messages, exception values, URLs, the transaction name, tags, contexts (the trace context's span
+ * attributes included), extra data, breadcrumbs and every span. Returns a scrubbed copy.
  */
-export const scrubEvent = <T extends ErrorEvent>(event: T, secrets: readonly string[] = []): T => {
+export const scrubEvent = <T extends ErrorEvent | TransactionEvent>(event: T, secrets: readonly string[] = []): T => {
   const scrubbed: T = { ...event }
   const text = (value: string) => scrubString(value, secrets)
 
@@ -194,10 +257,47 @@ export const scrubEvent = <T extends ErrorEvent>(event: T, secrets: readonly str
     ) as T['tags']
   }
   if (scrubbed.extra) scrubbed.extra = scrubValue(scrubbed.extra, secrets) as T['extra']
-  if (scrubbed.contexts) scrubbed.contexts = scrubValue(scrubbed.contexts, secrets) as T['contexts']
+  if (scrubbed.contexts) {
+    const { trace, ...others } = scrubbed.contexts
+    scrubbed.contexts = {
+      ...(scrubValue(others, secrets) as T['contexts']),
+      ...(trace && { trace: { ...trace, data: scrubSpanData(trace.data as Record<string, unknown> | undefined, secrets) } }),
+    } as T['contexts']
+  }
   if (scrubbed.breadcrumbs) scrubbed.breadcrumbs = scrubbed.breadcrumbs.map((crumb) => scrubBreadcrumb(crumb, secrets))
+  if (scrubbed.spans) scrubbed.spans = scrubbed.spans.map((span) => scrubSpan(span, secrets))
 
   return scrubbed
+}
+
+/**
+ * Errors the SDK captures itself (Next route handlers and server components through the build plugin's wrappers,
+ * uncaught exceptions) carry no `source` tag; derive one from the capture mechanism so every event is searchable.
+ */
+export const withSource = (event: ErrorEvent): ErrorEvent => {
+  if (event.tags?.source) return event
+  const mechanism = event.exception?.values?.find((value) => value.mechanism?.type)?.mechanism?.type ?? ''
+  const source = mechanism.endsWith('nextjs.route_handler')
+    ? 'next-route'
+    : mechanism.endsWith('nextjs.server_component')
+      ? 'next-render'
+      : mechanism.startsWith('auto.function.nextjs')
+        ? 'next'
+        : /^auto\.node\.on(uncaughtexception|unhandledrejection)$/.test(mechanism)
+          ? 'process'
+          : undefined
+  return source ? { ...event, tags: { ...event.tags, source } } : event
+}
+
+/**
+ * Share of requests traced: `SENTRY_TRACES_SAMPLE_RATE` (0 to 1) when it is a valid number, otherwise 0.1 in
+ * production and 1 everywhere else.
+ */
+export const tracesSampleRate = (env: Env): number => {
+  const raw = env.SENTRY_TRACES_SAMPLE_RATE?.trim()
+  const rate = raw ? Number(raw) : Number.NaN
+  if (Number.isFinite(rate) && rate >= 0 && rate <= 1) return rate
+  return env.NODE_ENV === 'production' ? 0.1 : 1
 }
 
 /**
@@ -221,14 +321,10 @@ export const DATA_COLLECTION: NonNullable<NodeOptions['dataCollection']> = {
 
 /**
  * The Sentry options, or `null` without `SENTRY_DSN`: then Sentry is not initialised and `captureError` only logs.
- * No tracing (sample rate 0, no trace headers on outgoing requests, so S3 and Medusa calls are untouched), no
- * replay, no data collected by the SDK itself (`DATA_COLLECTION`, the Sentry 11 form of `sendDefaultPii: false`).
- * The secrets to mask are read from the environment once, here.
- *
- * `enableOpenTelemetrySetup: false`: @sentry/nextjs registers an OpenTelemetry tracer provider by default. Next then
- * sees an active span on every request and assumes an outer handler reports errors, so a failing route handler
- * (`/my-route`) was neither logged nor passed to `onRequestError` (checked on Next 15.4.11). Without tracing the
- * provider is useless; Sentry still isolates each request with AsyncLocalStorage.
+ * Tracing on (`tracesSampleRate`), sent as whole transactions (`traceLifecycle: 'static'`) so that
+ * `beforeSendTransaction` sees and scrubs every span; no trace headers on outgoing requests (S3 and other services
+ * are untouched); no replay, logs or feedback; no data collected by the SDK itself (`DATA_COLLECTION`, the Sentry 11
+ * form of `sendDefaultPii: false`). The secrets to mask are read from the environment once, here.
  */
 export const buildSentryOptions = (env: Env): NodeOptions | null => {
   const dsn = env.SENTRY_DSN?.trim()
@@ -240,10 +336,13 @@ export const buildSentryOptions = (env: Env): NodeOptions | null => {
     release: env.RAILWAY_GIT_COMMIT_SHA || undefined,
     dataCollection: DATA_COLLECTION,
     includeLocalVariables: false,
-    tracesSampleRate: 0,
+    tracesSampleRate: tracesSampleRate(env),
+    traceLifecycle: 'static',
     tracePropagationTargets: [],
-    enableOpenTelemetrySetup: false,
-    beforeSend: (event) => scrubEvent(event, secrets),
+    beforeSend: (event) => scrubEvent(withSource(event), secrets),
+    beforeSendTransaction: (event) => scrubEvent(event, secrets),
     beforeBreadcrumb: (breadcrumb) => scrubBreadcrumb(breadcrumb, secrets),
+    // Sentry logs stay off: nothing calls Sentry.logger, and any log an integration might create is dropped.
+    beforeSendLog: () => null,
   }
 }
