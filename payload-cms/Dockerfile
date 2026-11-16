@@ -34,12 +34,18 @@ COPY . .
 # Uncomment the following line in case you want to disable telemetry during the build.
 # ENV NEXT_TELEMETRY_DISABLED 1
 
+# Optional build secret: with it `next build` uploads source maps to Sentry. Declared in this stage only, so it never
+# reaches the runner stage (the final image); Railway passes a service variable to the build only for a declared ARG.
+ARG SENTRY_AUTH_TOKEN
+
+# After the build no source map is left for the runner stage: they were uploaded (or not generated without the token).
 RUN \
   if [ -f yarn.lock ]; then yarn run build; \
   elif [ -f package-lock.json ]; then npm run build; \
   elif [ -f pnpm-lock.yaml ]; then pnpm run build; \
   else echo "Lockfile not found." && exit 1; \
-  fi
+  fi \
+  && find .next/standalone .next/static -name '*.map' -delete
 
 # Production image, copy all the files and run next
 FROM base AS runner
