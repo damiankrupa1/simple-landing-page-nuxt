@@ -26,6 +26,9 @@ describe('EMBED_HIDE_CSS', () => {
     for (const selector of ['.nav__log-out', '.app-header__account', '.unauthorized__button']) {
       assert.ok(EMBED_HIDE_CSS.includes(selector), selector)
     }
+    assert.ok(EMBED_HIDE_CSS.includes('html:not([data-embed="direct"])'))
+    assert.ok(EMBED_HIDE_CSS.includes('[aria-label*="language" i]'))
+    assert.ok(EMBED_HIDE_CSS.includes('--payload-host-background'))
   })
 })
 
@@ -36,10 +39,13 @@ describe('screenForPath', () => {
     assert.deepEqual(screenForPath('/admin/logout/'), { kind: 'renew', reason: 'logout' })
   })
 
-  it('maps unauthorized to denied and everything else to nothing', () => {
+  it('maps unauthorized and the managed account page to their embed screens', () => {
     assert.deepEqual(screenForPath('/admin/unauthorized'), { kind: 'denied' })
+    assert.deepEqual(screenForPath('/admin/account'), { kind: 'managed-account' })
+  })
+
+  it('leaves normal admin pages alone', () => {
     assert.equal(screenForPath('/admin'), null)
     assert.equal(screenForPath('/admin/globals/navigation'), null)
-    assert.equal(screenForPath('/admin/account'), null)
   })
 })

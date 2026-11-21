@@ -7,7 +7,8 @@
  *
  *   frame -> host: ready {path, locale} | nav:changed {path, search} | session:expired {reason}
  *                  | access:denied {path} | resize {height}
- *   host -> frame: hello {lng} | nav:goto {path} | locale:changed {lng} | session:logout | session:keepalive
+ *   host -> frame: hello {lng, theme?} | nav:goto {path} | locale:changed {lng} | theme:changed {theme}
+ *                  | session:logout | session:keepalive
  */
 
 export const PROTOCOL_NAMESPACE = 'payload-embed'
@@ -16,6 +17,7 @@ export const MAX_MESSAGE_BYTES = 2048
 
 export const LOCALES = ['en', 'pl'] as const
 export type Lng = (typeof LOCALES)[number]
+export type HostTheme = { backgroundColor: string; colorScheme: 'dark' | 'light' }
 export const EXPIRED_REASONS = ['expired', 'logout', 'inactivity'] as const
 export type ExpiredReason = (typeof EXPIRED_REASONS)[number]
 
@@ -27,9 +29,10 @@ export type FrameMessage =
   | { type: 'resize'; payload: { height: number } }
 
 export type HostMessage =
-  | { type: 'hello'; payload: { lng: Lng } }
+  | { type: 'hello'; payload: { lng: Lng; theme?: HostTheme } }
   | { type: 'nav:goto'; payload: { path: string } }
   | { type: 'locale:changed'; payload: { lng: Lng } }
+  | { type: 'theme:changed'; payload: HostTheme }
   | { type: 'session:logout'; payload: Record<string, never> }
   | { type: 'session:keepalive'; payload: Record<string, never> }
 
@@ -55,6 +58,15 @@ const isRecord = (value: unknown): value is Record<string, unknown> =>
   typeof value === 'object' && value !== null && !Array.isArray(value)
 
 const isLng = (value: unknown): value is Lng => (LOCALES as readonly string[]).includes(value as string)
+
+const isHostTheme = (value: unknown): value is HostTheme => {
+  if (!isRecord(value) || (value.colorScheme !== 'dark' && value.colorScheme !== 'light')) return false
+  if (typeof value.backgroundColor !== 'string' || value.backgroundColor.length > 64) return false
+
+  return /^(#[\da-f]{3,8}|rgba?\(\s*\d{1,3}\s*,\s*\d{1,3}\s*,\s*\d{1,3}(?:\s*,\s*(?:0|1|0?\.\d+))?\s*\))$/i.test(
+    value.backgroundColor,
+  )
+}
 
 const text = (value: unknown, max: number): value is string => typeof value === 'string' && value.length <= max
 
@@ -84,8 +96,19 @@ export const parseHostMessage = (data: unknown): HostMessage | null => {
   const { type, payload } = message
   switch (type) {
     case 'hello':
+      return isLng(payload.lng) && (payload.theme === undefined || isHostTheme(payload.theme))
+        ? {
+            type,
+            payload: {
+              lng: payload.lng,
+              ...(payload.theme ? { theme: payload.theme } : {}),
+            },
+          }
+        : null
     case 'locale:changed':
       return isLng(payload.lng) ? { type, payload: { lng: payload.lng } } : null
+    case 'theme:changed':
+      return isHostTheme(payload) ? { type, payload } : null
     case 'nav:goto':
       return isAdminPath(payload.path) ? { type, payload: { path: payload.path } } : null
     case 'session:logout':
