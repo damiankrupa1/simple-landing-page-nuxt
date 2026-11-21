@@ -8,6 +8,7 @@ import { medusaRevoke } from '../endpoints/medusaRevoke'
 import { medusaSso } from '../endpoints/medusaSso'
 import { withErrorCapture } from '../endpoints/withErrorCapture'
 import { ROLES, isAdmin, normalizeRole, roleOf, userAtLeast } from '../access/roles'
+import { userUpdateAccess } from '../access/userUpdateAccess'
 
 /**
  * Users collection configuration
@@ -45,7 +46,7 @@ export const Users: CollectionConfig = {
     admin: ({ req }) => userAtLeast(req.user, 'viewer'),
     create: isAdmin,
     read: adminOrSelf,
-    update: adminOrSelf,
+    update: ({ req }) => userUpdateAccess(req.user),
     delete: isAdmin,
   },
   hooks: {
