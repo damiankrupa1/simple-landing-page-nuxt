@@ -45,7 +45,11 @@ describe('isAdminPath', () => {
 
 describe('parseHostMessage', () => {
   it('accepts the v1 host messages', () => {
-    assert.deepEqual(parseHostMessage(env('hello', { lng: 'pl' })), { type: 'hello', payload: { lng: 'pl' } })
+    const theme = { backgroundColor: 'rgb(20, 20, 20)', colorScheme: 'dark' }
+    assert.deepEqual(parseHostMessage(env('hello', { lng: 'pl', theme })), {
+      type: 'hello',
+      payload: { lng: 'pl', theme },
+    })
     assert.deepEqual(parseHostMessage(env('nav:goto', { path: '/admin/globals/brands' })), {
       type: 'nav:goto',
       payload: { path: '/admin/globals/brands' },
@@ -53,6 +57,10 @@ describe('parseHostMessage', () => {
     assert.deepEqual(parseHostMessage(env('locale:changed', { lng: 'en' }, { id: 'a1' })), {
       type: 'locale:changed',
       payload: { lng: 'en' },
+    })
+    assert.deepEqual(parseHostMessage(env('theme:changed', theme)), {
+      type: 'theme:changed',
+      payload: theme,
     })
     assert.deepEqual(parseHostMessage(env('session:logout')), { type: 'session:logout', payload: {} })
     assert.deepEqual(parseHostMessage(env('session:keepalive', {})), { type: 'session:keepalive', payload: {} })
@@ -65,6 +73,8 @@ describe('parseHostMessage', () => {
     assert.equal(parseHostMessage({ ...env('hello', { lng: 'pl' }), v: 2 }), null)
     assert.equal(parseHostMessage(env('unknown', {})), null)
     assert.equal(parseHostMessage(env('hello', { lng: 'de' })), null)
+    assert.equal(parseHostMessage(env('hello', { lng: 'en', theme: { backgroundColor: 'url(evil)', colorScheme: 'dark' } })), null)
+    assert.equal(parseHostMessage(env('theme:changed', { backgroundColor: 'red; display:none', colorScheme: 'light' })), null)
     assert.equal(parseHostMessage(env('hello', 'pl')), null)
     assert.equal(parseHostMessage(env('nav:goto', { path: 'https://evil.com' })), null)
     assert.equal(parseHostMessage(env('nav:goto', { path: '//evil.com' })), null)

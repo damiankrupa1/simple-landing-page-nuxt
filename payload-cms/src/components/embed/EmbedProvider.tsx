@@ -4,7 +4,13 @@ import { usePathname, useRouter } from 'next/navigation.js'
 import React, { useCallback, useEffect, useRef, useState } from 'react'
 
 import { EMBED_HIDE_CSS, isFramed, screenForPath, type EmbedScreen } from '../../embed/frame.ts'
-import { buildMessage, isTrustedEvent, parseHostMessage, type FrameMessage } from '../../embed/protocol.ts'
+import {
+  buildMessage,
+  isTrustedEvent,
+  parseHostMessage,
+  type FrameMessage,
+  type HostTheme,
+} from '../../embed/protocol.ts'
 
 type Props = {
   children?: React.ReactNode
@@ -17,24 +23,44 @@ type Props = {
 type Mode = 'unknown' | 'frame' | 'direct'
 
 const TEXTS = {
-  en: { renew: 'Renewing your session...', denied: 'You have no access to the CMS. Ask an administrator for a role.' },
-  pl: { renew: 'Odnawianie sesji...', denied: 'Brak dostępu do CMS. Poproś administratora o rolę.' },
+  en: {
+    renew: 'Renewing your session...',
+    denied: 'You have no access to the CMS. Ask an administrator for a role.',
+    managedAccount: 'Your account details are managed by the Medusa admin.',
+  },
+  pl: {
+    renew: 'Odnawianie sesji...',
+    denied: 'Brak dostępu do CMS. Poproś administratora o rolę.',
+    managedAccount: 'Dane konta są zarządzane przez panel Medusy.',
+  },
 }
 
 /**
  * Wraps the whole admin.
  *
- * Embed mode (flag on): the account and logout UI is hidden by server-rendered CSS until the page proves it is
- * not in a frame, so a direct visit to /admin behaves as before. In a frame the page talks to the Medusa admin
- * (host) over postMessage (see src/embed/protocol.ts): it reports navigation and session loss, and never shows
- * the Payload login form: a lost session is reported as `session:expired` and the page shows a status text
- * while the host ends the Medusa session and shows the Medusa login.
+ * Embed mode (flag on): account, logout and language controls are hidden until the page proves it is not framed,
+ * so a direct visit to /admin behaves as before. In a frame the host controls locale and appearance, and account
+ * identity remains read-only because it is owned by Medusa.
  */
 export const EmbedProvider: React.FC<Props> = ({ children, embedded, origins }) => {
   const pathname = usePathname()
   const router = useRouter()
   const [mode, setMode] = useState<Mode>('unknown')
   const hostOrigin = useRef<string | null>(null)
+
+  const applyHostTheme = useCallback((theme: HostTheme) => {
+    const root = document.documentElement
+    root.style.setProperty('--payload-host-background', theme.backgroundColor)
+    root.style.setProperty('--theme-bg', theme.backgroundColor)
+    root.dataset.theme = theme.colorScheme
+  }, [])
+
+  const applyHostLocale = useCallback((lng: 'en' | 'pl') => {
+    document.cookie = `payload-lng=${lng}; Path=/; Max-Age=31536000; SameSite=${
+      window.location.protocol === 'https:' ? 'None; Secure' : 'Lax'
+    }`
+    router.refresh()
+  }, [router])
 
   useEffect(() => {
     if (!embedded) return
@@ -59,6 +85,21 @@ export const EmbedProvider: React.FC<Props> = ({ children, embedded, origins }) 
     [post],
   )
 
+  useEffect(() => {
+    if (mode !== 'frame') return
+
+    const logoutWhenFrameCloses = () => {
+      void fetch('/api/users/logout', {
+        method: 'POST',
+        credentials: 'same-origin',
+        keepalive: true,
+      }).catch(() => undefined)
+    }
+
+    window.addEventListener('pagehide', logoutWhenFrameCloses)
+    return () => window.removeEventListener('pagehide', logoutWhenFrameCloses)
+  }, [mode])
+
   // Host -> frame commands.
   useEffect(() => {
     if (mode !== 'frame') return
@@ -69,20 +110,24 @@ export const EmbedProvider: React.FC<Props> = ({ children, embedded, origins }) 
       hostOrigin.current = event.origin
       switch (message.type) {
         case 'hello':
-          post({ type: 'ready', payload: { path: window.location.pathname, locale: document.documentElement.lang || 'en' } })
+          applyHostLocale(message.payload.lng)
+          if (message.payload.theme) applyHostTheme(message.payload.theme)
           break
         case 'nav:goto':
           router.push(message.payload.path)
           break
         case 'locale:changed':
-          // Payload reads the admin language from this cookie (default prefix `payload`).
-          document.cookie = `payload-lng=${message.payload.lng}; Path=/; Max-Age=31536000; SameSite=${
-            window.location.protocol === 'https:' ? 'None; Secure' : 'Lax'
-          }`
-          router.refresh()
+          applyHostLocale(message.payload.lng)
+          break
+        case 'theme:changed':
+          applyHostTheme(message.payload)
           break
         case 'session:logout':
-          void fetch('/api/users/logout', { method: 'POST', credentials: 'same-origin' })
+          void fetch('/api/users/logout', {
+            method: 'POST',
+            credentials: 'same-origin',
+            keepalive: true,
+          })
             .catch(() => undefined)
             .then(() => router.replace('/admin/login'))
           break
@@ -99,7 +144,7 @@ export const EmbedProvider: React.FC<Props> = ({ children, embedded, origins }) 
     // Announce ourselves; the host answers with `hello`, which tells us its exact origin.
     post({ type: 'ready', payload: { path: window.location.pathname, locale: document.documentElement.lang || 'en' } })
     return () => window.removeEventListener('message', onMessage)
-  }, [mode, origins, post, reportExpired, router])
+  }, [applyHostLocale, applyHostTheme, mode, origins, post, reportExpired, router])
 
   // Frame -> host: navigation and session state, on every admin route change.
   const screen: EmbedScreen | null = mode === 'frame' ? screenForPath(pathname) : null
@@ -135,7 +180,11 @@ export const EmbedProvider: React.FC<Props> = ({ children, embedded, origins }) 
             zIndex: 2147483000,
           }}
         >
-          {screen.kind === 'denied' ? texts.denied : texts.renew}
+          {screen.kind === 'denied'
+            ? texts.denied
+            : screen.kind === 'managed-account'
+              ? texts.managedAccount
+              : texts.renew}
         </div>
       ) : null}
     </>

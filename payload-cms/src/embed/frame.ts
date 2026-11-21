@@ -9,21 +9,24 @@ export const isFramed = (win: { self: unknown; top: unknown }): boolean => {
 }
 
 /**
- * CSS that hides every way to leave the session from the Payload UI: the user icon (which links to the account
- * page), the nav logout icon and the "Log out" button of the unauthorized view. It is only rendered when embed
- * mode is on and applies until `data-embed="direct"` is set on <html> (page not framed), so the UI is hidden
- * from the first paint, not after hydration (fail closed).
+ * In embed mode, hide the account/logout controls and language controls until `data-embed="direct"` is set
+ * (the page is not framed). The background follows the value supplied by the Medusa host.
  *
  * The class names come from @payloadcms/ui 3.92 (`nav__log-out`, `app-header__account`, `unauthorized__button`);
  * re-check them when upgrading Payload.
  */
 export const EMBED_HIDE_CSS =
   'html:not([data-embed="direct"]) :is(.nav__log-out,.app-header__account,.unauthorized__button){display:none!important}' +
-  // Framed or not yet known: the login / inactivity / unauthorized pages (all use the minimal template) are
-  // never shown; the host gets a message and the page shows a status text instead.
+  'html:not([data-embed="direct"]) .app-header :is([aria-label*="language" i],[aria-label*="język" i],[title*="language" i],[title*="język" i]){display:none!important}' +
+  'html[data-embed="frame"]{background-color:var(--payload-host-background,var(--theme-bg))}' +
+  'html[data-embed="frame"] body{background-color:var(--payload-host-background,var(--theme-bg))}' +
+  // Framed or not yet known: login, inactivity and unauthorized pages are replaced by a status message.
   'html:not([data-embed="direct"]) .template-minimal__wrap{visibility:hidden}'
 
-export type EmbedScreen = { kind: 'renew'; reason: 'expired' | 'logout' | 'inactivity' } | { kind: 'denied' }
+export type EmbedScreen =
+  | { kind: 'renew'; reason: 'expired' | 'logout' | 'inactivity' }
+  | { kind: 'denied' }
+  | { kind: 'managed-account' }
 
 /**
  * Which "no Payload login form here" screen a framed page must show for the current admin path:
@@ -38,5 +41,6 @@ export const screenForPath = (pathname: string): EmbedScreen | null => {
     return { kind: 'renew', reason: 'expired' }
   }
   if (path === '/admin/unauthorized') return { kind: 'denied' }
+  if (path === '/admin/account') return { kind: 'managed-account' }
   return null
 }
