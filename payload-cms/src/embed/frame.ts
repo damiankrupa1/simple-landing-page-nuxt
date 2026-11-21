@@ -18,8 +18,10 @@ export const isFramed = (win: { self: unknown; top: unknown }): boolean => {
 export const EMBED_HIDE_CSS =
   'html:not([data-embed="direct"]) :is(.nav__log-out,.app-header__account,.unauthorized__button){display:none!important}' +
   'html:not([data-embed="direct"]) .app-header :is([aria-label*="language" i],[aria-label*="język" i],[title*="language" i],[title*="język" i]){display:none!important}' +
-  'html[data-embed="frame"]{background-color:var(--payload-host-background,var(--theme-bg))}' +
-  'html[data-embed="frame"] body{background-color:var(--payload-host-background,var(--theme-bg))}' +
+  'html[data-embed="frame"]{background-color:var(--payload-host-background,var(--theme-bg));font-family:Inter,sans-serif;--font-body:Inter,sans-serif}' +
+  'html[data-embed="frame"] body{background-color:var(--payload-host-background,var(--theme-bg));font-family:inherit}' +
+  'html[data-embed="frame"] .template-default__wrap{box-sizing:border-box;width:100%;min-width:0;max-width:none}' +
+  'html[data-embed="frame"] .template-default__wrap>:not(.app-header){box-sizing:border-box;width:100%;max-width:none}' +
   // Framed or not yet known: login, inactivity and unauthorized pages are replaced by a status message.
   'html:not([data-embed="direct"]) .template-minimal__wrap{visibility:hidden}'
 
