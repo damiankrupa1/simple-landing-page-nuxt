@@ -1,7 +1,17 @@
 import assert from 'node:assert/strict'
 import { describe, it } from 'node:test'
 
-import { ROLES, atLeast, isAdmin, normalizeRole, roleAtLeast, roleOf, userAtLeast } from './roles.ts'
+import {
+  ROLES,
+  atLeast,
+  isAdmin,
+  isSuperAdmin,
+  normalizeRole,
+  parseSuperAdmins,
+  roleAtLeast,
+  roleOf,
+  userAtLeast,
+} from './roles.ts'
 
 type AccessFn = (args: unknown) => unknown
 const run = (access: unknown, user: unknown) => (access as AccessFn)({ req: { user } })
@@ -38,5 +48,28 @@ describe('roles', () => {
     assert.equal(run(atLeast('editor'), undefined), false)
     assert.equal(run(isAdmin, { role: 'publisher' }), false)
     assert.equal(run(isAdmin, { role: 'admin' }), true)
+  })
+})
+
+describe('super admins', () => {
+  const env = { PAYLOAD_SUPER_ADMIN_EMAILS: ' Me@Example.com, other@example.com ,,' }
+
+  it('parses a comma separated, case-insensitive list', () => {
+    assert.deepEqual(parseSuperAdmins(env), ['me@example.com', 'other@example.com'])
+    assert.deepEqual(parseSuperAdmins({}), [])
+    assert.deepEqual(parseSuperAdmins({ PAYLOAD_SUPER_ADMIN_EMAILS: '  ' }), [])
+  })
+
+  it('is true only for a listed e-mail', () => {
+    assert.equal(isSuperAdmin({ email: 'me@example.com' }, env), true)
+    assert.equal(isSuperAdmin({ collection: 'users', email: 'ME@example.com' }, env), true)
+    assert.equal(isSuperAdmin({ email: 'someone@example.com', role: 'admin' }, env), false)
+  })
+
+  it('is false without a list, a user, an e-mail or for another auth collection', () => {
+    assert.equal(isSuperAdmin({ email: 'me@example.com' }, {}), false)
+    assert.equal(isSuperAdmin(null, env), false)
+    assert.equal(isSuperAdmin({}, env), false)
+    assert.equal(isSuperAdmin({ collection: 'service-users', email: 'me@example.com' }, env), false)
   })
 })

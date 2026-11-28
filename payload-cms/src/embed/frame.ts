@@ -9,15 +9,19 @@ export const isFramed = (win: { self: unknown; top: unknown }): boolean => {
 }
 
 /**
- * In embed mode, hide the account/logout controls and language controls until `data-embed="direct"` is set
- * (the page is not framed). The background follows the value supplied by the Medusa host.
+ * In embed mode, hide the account/logout controls, the language controls (including the content locale dropdown)
+ * and the link to the dashboard until `data-embed="direct"` is set (the page is not framed and `enableDebug=1`
+ * was used, see gate.ts). The background follows the value supplied by the Medusa host.
  *
- * The class names come from @payloadcms/ui 3.92 (`nav__log-out`, `app-header__account`, `unauthorized__button`);
+ * The class names come from @payloadcms/ui 3.92 (`nav__log-out`, `app-header__account`, `unauthorized__button`, `localizer`, `step-nav__home`);
  * re-check them when upgrading Payload.
  */
 export const EMBED_HIDE_CSS =
   'html:not([data-embed="direct"]) :is(.nav__log-out,.app-header__account,.unauthorized__button){display:none!important}' +
   'html:not([data-embed="direct"]) .app-header :is([aria-label*="language" i],[aria-label*="język" i],[title*="language" i],[title*="język" i]){display:none!important}' +
+  // The content locale dropdown and the breadcrumb's link to the dashboard: the host picks the language and the
+  // pages are reached from the Medusa side menu.
+  'html:not([data-embed="direct"]) :is(.localizer,.step-nav__home){display:none!important}' +
   'html[data-embed="frame"]{background-color:var(--payload-host-background,var(--theme-bg));font-family:Inter,sans-serif;--font-body:Inter,sans-serif}' +
   'html[data-embed="frame"] body{background-color:var(--payload-host-background,var(--theme-bg));font-family:inherit}' +
   'html[data-embed="frame"] .template-default__wrap{box-sizing:border-box;width:100%;min-width:0;max-width:none}' +

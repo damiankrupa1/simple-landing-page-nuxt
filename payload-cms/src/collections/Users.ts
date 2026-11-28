@@ -7,7 +7,7 @@ import { APIError, type Access, type CollectionConfig, type FieldAccess } from '
 import { medusaRevoke } from '../endpoints/medusaRevoke'
 import { medusaSso } from '../endpoints/medusaSso'
 import { withErrorCapture } from '../endpoints/withErrorCapture'
-import { ROLES, isAdmin, normalizeRole, roleOf, userAtLeast } from '../access/roles'
+import { ROLES, isAdmin, isSuperAdmin, normalizeRole, roleOf, userAtLeast } from '../access/roles'
 import { userUpdateAccess } from '../access/userUpdateAccess'
 
 /**
@@ -40,6 +40,9 @@ export const Users: CollectionConfig = {
   slug: 'users',
   admin: {
     useAsTitle: 'email',
+    // Only super admins (PAYLOAD_SUPER_ADMIN_EMAILS) see the Users tab; it also closes its admin routes. Access
+    // rules below are unchanged: this only hides the screens.
+    hidden: ({ user }) => !isSuperAdmin(user),
   },
   access: {
     // Default deny: only a user with a role from Medusa gets into the admin panel (`none` sees /admin/unauthorized).

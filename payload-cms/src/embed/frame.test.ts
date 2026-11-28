@@ -28,6 +28,8 @@ describe('EMBED_HIDE_CSS', () => {
     }
     assert.ok(EMBED_HIDE_CSS.includes('html:not([data-embed="direct"])'))
     assert.ok(EMBED_HIDE_CSS.includes('[aria-label*="language" i]'))
+    assert.ok(EMBED_HIDE_CSS.includes('.localizer'))
+    assert.ok(EMBED_HIDE_CSS.includes('.step-nav__home'))
     assert.ok(EMBED_HIDE_CSS.includes('--payload-host-background'))
     assert.ok(EMBED_HIDE_CSS.includes('--font-body:Inter,sans-serif'))
     assert.ok(EMBED_HIDE_CSS.includes('.template-default__wrap>:not(.app-header)'))

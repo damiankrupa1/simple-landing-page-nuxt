@@ -43,3 +43,22 @@ export const fieldAtLeast =
   (min: Role): FieldAccess =>
   ({ req }) =>
     userAtLeast(req.user, min)
+
+/**
+ * Super admins: the accounts listed in `PAYLOAD_SUPER_ADMIN_EMAILS` (comma separated, case-insensitive). They are
+ * the only ones who see the Users collection in the admin. Identity is the e-mail because Medusa owns it and it is
+ * read-only on linked accounts; the list lives in the environment, so nobody can promote themselves from the
+ * admin. An empty or missing list means there is no super admin.
+ */
+export const parseSuperAdmins = (env: Record<string, string | undefined>): string[] =>
+  (env.PAYLOAD_SUPER_ADMIN_EMAILS ?? '')
+    .split(',')
+    .map((entry) => entry.trim().toLowerCase())
+    .filter(Boolean)
+
+export const isSuperAdmin = (user: unknown, env: Record<string, string | undefined> = process.env): boolean => {
+  if (!user || typeof user !== 'object') return false
+  const { collection, email } = user as { collection?: unknown; email?: unknown }
+  if (typeof collection === 'string' && collection !== 'users') return false
+  return typeof email === 'string' && parseSuperAdmins(env).includes(email.trim().toLowerCase())
+}
