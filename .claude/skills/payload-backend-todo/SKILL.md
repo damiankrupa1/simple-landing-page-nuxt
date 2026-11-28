@@ -96,9 +96,9 @@ Conventions used throughout:
 - **Fields**: `freeShipping`, `carriers`, `returns` — localized text, required; `priceNote`, `shippingTime` — localized text, optional (empty means hide the line). Fetch with `depth=0`.
 - **Consumed by** (storefront, nuxtMedusa#58): the reassurance block under the add-to-cart button. The help line reuses `FooterContent.contact.email`, so there is no field for it.
 
-## Information pages (10 Globals) — implemented (nuxtMedusa#118)
+## Information pages (14 Globals) — implemented (nuxtMedusa#118, #119)
 
-The copy of the footer's information pages. The storefront keeps the **structure** (which pages exist, route, footer group, `status` draft/published, `toc`, `contact`) in `INFO_PAGES`; Payload holds the **copy**. One Global per page, from one factory (`src/globals/InfoPages.ts`, list in `src/globals/infoPageList.ts`), all with the same fields, so a page is a slug plus a migration. Globals rather than a collection because the draft preview, the public proxy and `CMS_GLOBAL_SLUGS` only know Globals.
+The copy of the footer's information pages: ten help and "Świat Fashion" pages (#118) and four legal pages (#119). The routes are the storefront's to decide in `INFO_PAGES` (the legal ones are the proposal in `src/globals/infoPageList.ts`); Payload only uses them to open the preview, so change both together. The storefront keeps the **structure** (which pages exist, route, footer group, `status` draft/published, `toc`, `contact`) in `INFO_PAGES`; Payload holds the **copy**. One Global per page, from one factory (`src/globals/InfoPages.ts`, list in `src/globals/infoPageList.ts`), all with the same fields, so a page is a slug plus a migration. Globals rather than a collection because the draft preview, the public proxy and `CMS_GLOBAL_SLUGS` only know Globals.
 
 | Slug | Storefront route |
 |---|---|
@@ -112,6 +112,10 @@ The copy of the footer's information pages. The storefront keeps the **structure
 | `info-journal` | `/journal` |
 | `info-materials` | `/materials-and-care` |
 | `info-careers` | `/careers` |
+| `info-terms` | `/terms` (terms of sale) |
+| `info-privacy` | `/privacy` (privacy notice) |
+| `info-cookies` | `/cookies` (cookie policy) |
+| `info-accessibility` | `/accessibility` (accessibility statement) |
 
 - **Fields** (all text localized unless noted; required to publish, a draft may miss them):
   - `title`, `description` (search result), `eyebrow`, `heading`, `lead`.
@@ -125,8 +129,9 @@ The copy of the footer's information pages. The storefront keeps the **structure
 - **Status**: stays in the storefront (`INFO_PAGES[].status`), so a page is still `noindex` and out of the sitemap until the owner flips it there. Payload's `_status` only says whether the copy is available; with no published copy the storefront has nothing to render and should answer 404 (no static fallback).
 - **Preview**: each Global has its own Preview button / Live Preview pane that opens the page's own route (`path` in the preview link), so the storefront's preview must accept each slug as `global` and serve its draft.
 - **Placeholders**: the `TODO(owner)` facts become `placeholder` blocks; seeded with the same neutral wording the storefront shows today.
-- **Seed**: `SEED_SOURCE=<nuxtMedusa checkout> SEED_REF=<last commit with the copy in i18n> pnpm seed:info-pages` (see `seed-home-content`). It reads `INFO_PAGES` and `pages.<id>.*` and skips a page that already has content unless `SEED_OVERWRITE=yes`.
-- **Storefront side** (outside this repo): add the ten slugs to `CMS_GLOBAL_SLUGS` with zod schemas in `app/types/cms.ts`, fetch them with cache keys `cms:<slug>:${locale}`, render the blocks, and drop the copy from i18n once the CMS is seeded. The size table stays on the product page's data until #58.
+- **Seed** (the ten help and world pages): `SEED_SOURCE=<nuxtMedusa checkout> SEED_REF=<last commit with the copy in i18n> pnpm seed:info-pages` (see `seed-home-content`). It reads `INFO_PAGES` and `pages.<id>.*` and skips a page that already has content unless `SEED_OVERWRITE=yes`.
+- **Legal pages** (`info-terms`, `info-privacy`, `info-cookies`, `info-accessibility`): same fields and blocks, **nothing seeded**. The texts are legal documents, so the owner or a lawyer writes them in the admin; neither the storefront nor this repo invents them. Until one is published its response is `{}` and the storefront renders nothing for it. The footer links are entered by the owner in `footer-content.legalLinks`. What the texts have to state truthfully (the owner confirms each): Stripe payments, InPost Geowidget, Sentry (storefront #39; Payload also reports errors to Sentry without personal data), the cookies the storefront sets (`cart_id`, `country_code`), and the newsletter: Payload stores the e-mail, the consent wording the visitor saw (text, hash, locale) and the sign-up date as proof of consent, plus the discount code it issued; the 3-year retention in `newsletter-storefront` is an assumption for whoever handles data protection to confirm, and nothing deletes old rows yet. The returns and complaints copy (`info-returns`) needs the same legal review.
+- **Storefront side** (outside this repo): add the fourteen slugs to `CMS_GLOBAL_SLUGS` with zod schemas in `app/types/cms.ts`, fetch them with cache keys `cms:<slug>:${locale}`, render the blocks, and drop the copy from i18n once the CMS is seeded. The size table stays on the product page's data until #58.
 
 ## Not yet implemented (see `missing-cms-content` for the product-side need)
 

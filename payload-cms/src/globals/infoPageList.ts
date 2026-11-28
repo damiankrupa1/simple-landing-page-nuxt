@@ -1,5 +1,5 @@
 /**
- * @fileoverview The storefront's information pages (nuxtMedusa `INFO_PAGES`, issue #118) that have a Global each.
+ * @fileoverview The storefront's information pages (nuxtMedusa `INFO_PAGES`, issues #118 and #119) that have a Global each.
  *
  * Kept free of Payload imports so the list can be unit tested with `node --test`.
  *
@@ -55,4 +55,13 @@ export const INFO_PAGE_DEFINITIONS: InfoPageDefinition[] = [
     label: { en: 'Materials and care', pl: 'Materiały i pielęgnacja' },
   },
   { slug: 'info-careers', path: '/careers', label: { en: 'Careers', pl: 'Kariera' } },
+  // Legal (the footer's legal row, nuxtMedusa#119). No copy is seeded: the owner or a lawyer writes the texts.
+  { slug: 'info-terms', path: '/terms', label: { en: 'Terms of sale', pl: 'Regulamin' } },
+  { slug: 'info-privacy', path: '/privacy', label: { en: 'Privacy notice', pl: 'Polityka prywatności' } },
+  { slug: 'info-cookies', path: '/cookies', label: { en: 'Cookie policy', pl: 'Polityka cookies' } },
+  {
+    slug: 'info-accessibility',
+    path: '/accessibility',
+    label: { en: 'Accessibility statement', pl: 'Deklaracja dostępności' },
+  },
 ]
