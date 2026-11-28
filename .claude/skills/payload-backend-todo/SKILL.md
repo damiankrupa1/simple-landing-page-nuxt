@@ -96,6 +96,38 @@ Conventions used throughout:
 - **Fields**: `freeShipping`, `carriers`, `returns` — localized text, required; `priceNote`, `shippingTime` — localized text, optional (empty means hide the line). Fetch with `depth=0`.
 - **Consumed by** (storefront, nuxtMedusa#58): the reassurance block under the add-to-cart button. The help line reuses `FooterContent.contact.email`, so there is no field for it.
 
+## Information pages (10 Globals) — implemented (nuxtMedusa#118)
+
+The copy of the footer's information pages. The storefront keeps the **structure** (which pages exist, route, footer group, `status` draft/published, `toc`, `contact`) in `INFO_PAGES`; Payload holds the **copy**. One Global per page, from one factory (`src/globals/InfoPages.ts`, list in `src/globals/infoPageList.ts`), all with the same fields, so a page is a slug plus a migration. Globals rather than a collection because the draft preview, the public proxy and `CMS_GLOBAL_SLUGS` only know Globals.
+
+| Slug | Storefront route |
+|---|---|
+| `info-shipping` | `/help/shipping-and-payments` |
+| `info-returns` | `/help/returns` |
+| `info-size-guide` | `/help/size-guide` |
+| `info-track-order` | `/help/track-order` |
+| `info-faq` | `/help/faq` |
+| `info-about` | `/about` |
+| `info-studio` | `/studio` |
+| `info-journal` | `/journal` |
+| `info-materials` | `/materials-and-care` |
+| `info-careers` | `/careers` |
+
+- **Fields** (all text localized unless noted; required to publish, a draft may miss them):
+  - `title`, `description` (search result), `eyebrow`, `heading`, `lead`.
+  - `sections` — array of `{ anchor, heading, blocks }`. `anchor` is **not** localized: it is the old section id (`delivery`), the `#fragment` and the table of contents key; unique per page. `blocks` is a Payload blocks field, `blockType` = the storefront's `InfoBlock.kind`:
+    - `text` `{ text }`, `placeholder` `{ text }` (a fact only the owner knows: shown in neutral wording, replace with `text` once known, never invent it)
+    - `list` `{ ordered: boolean, items: [{ text }] }`
+    - `link` `{ label, to }` (`to`: a path inside the store, validated: starts with `/`, not `//`, no spaces)
+    - `faq` `{ items: [{ question, answer }] }`
+    - `sizeTable`, `contact`, `journal` `{}`: no fields; the storefront fills them from the `size-guide`, `footer-content` and `journal-section` Globals.
+- **REST shape**: `{ title, description, eyebrow, heading, lead, sections: [{ id, anchor, heading, blocks: [{ id, blockType, ... }] }], _status }`. Fetch with `depth=0`. Row ids are shared by `en` and `pl`: the two locales always have the same sections and blocks, only the text differs. Before first publication, or after "Unpublish", the response is `{}`.
+- **Status**: stays in the storefront (`INFO_PAGES[].status`), so a page is still `noindex` and out of the sitemap until the owner flips it there. Payload's `_status` only says whether the copy is available; with no published copy the storefront has nothing to render and should answer 404 (no static fallback).
+- **Preview**: each Global has its own Preview button / Live Preview pane that opens the page's own route (`path` in the preview link), so the storefront's preview must accept each slug as `global` and serve its draft.
+- **Placeholders**: the `TODO(owner)` facts become `placeholder` blocks; seeded with the same neutral wording the storefront shows today.
+- **Seed**: `SEED_SOURCE=<nuxtMedusa checkout> SEED_REF=<last commit with the copy in i18n> pnpm seed:info-pages` (see `seed-home-content`). It reads `INFO_PAGES` and `pages.<id>.*` and skips a page that already has content unless `SEED_OVERWRITE=yes`.
+- **Storefront side** (outside this repo): add the ten slugs to `CMS_GLOBAL_SLUGS` with zod schemas in `app/types/cms.ts`, fetch them with cache keys `cms:<slug>:${locale}`, render the blocks, and drop the copy from i18n once the CMS is seeded. The size table stays on the product page's data until #58.
+
 ## Not yet implemented (see `missing-cms-content` for the product-side need)
 
 These are still mocked with static i18n/hardcoded content; no `cms.repository.ts` fetcher exists for them yet. Add the Payload Global/Collection and the matching entry above in the same change as the Nuxt fetcher, so this file never drifts from `cms.repository.ts`.

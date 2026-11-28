@@ -14,6 +14,7 @@
     "lint": "cross-env NODE_OPTIONS=--no-deprecation next lint",
     "migrate": "cross-env NODE_OPTIONS=--no-deprecation payload migrate",
     "test": "node --test \"src/**/*.test.ts\"",
+    "seed:info-pages": "cross-env NODE_OPTIONS=--no-deprecation payload run scripts/seed-info-pages.ts",
     "seed:home": "cross-env NODE_OPTIONS=--no-deprecation payload run scripts/seed-home.ts",
     "migrate:create": "cross-env NODE_OPTIONS=--no-deprecation payload migrate:create",
     "payload": "3.92.0",
