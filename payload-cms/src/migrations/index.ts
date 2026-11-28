@@ -9,6 +9,7 @@ import * as migration_20261029_211311_service_users from './20261029_211311_serv
 import * as migration_20261029_212934_newsletter_signups from './20261029_212934_newsletter_signups';
 import * as migration_20261114_170046_size_guide_product_info from './20261114_170046_size_guide_product_info';
 import * as migration_20261128_094146_info_pages from './20261128_094146_info_pages';
+import * as migration_20261128_095011_legal_pages from './20261128_095011_legal_pages';
 
 export const migrations = [
   {
@@ -64,6 +65,11 @@ export const migrations = [
   {
     up: migration_20261128_094146_info_pages.up,
     down: migration_20261128_094146_info_pages.down,
-    name: '20261128_094146_info_pages'
+    name: '20261128_094146_info_pages',
+  },
+  {
+    up: migration_20261128_095011_legal_pages.up,
+    down: migration_20261128_095011_legal_pages.down,
+    name: '20261128_095011_legal_pages'
   },
 ];
