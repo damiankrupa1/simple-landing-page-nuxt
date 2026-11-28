@@ -4,6 +4,7 @@ import { usePathname, useRouter } from 'next/navigation.js'
 import React, { useCallback, useEffect, useRef, useState } from 'react'
 
 import { EMBED_HIDE_CSS, isFramed, screenForPath, type EmbedScreen } from '../../embed/frame.ts'
+import { isDebugRequested } from '../../embed/gate.ts'
 import {
   buildMessage,
   isTrustedEvent,
@@ -20,27 +21,33 @@ type Props = {
   origins: string[]
 }
 
-type Mode = 'unknown' | 'frame' | 'direct'
+// `blocked`: not framed and no `enableDebug=1`; the middleware refuses such a load, this covers a browser that
+// sends no `Sec-Fetch-Dest`.
+type Mode = 'unknown' | 'frame' | 'direct' | 'blocked'
 
 const TEXTS = {
   en: {
     renew: 'Renewing your session...',
     denied: 'You have no access to the CMS. Ask an administrator for a role.',
     managedAccount: 'Your account details are managed by the Medusa admin.',
+    standalone: 'The CMS opens inside the Medusa admin.',
   },
   pl: {
     renew: 'Odnawianie sesji...',
     denied: 'Brak dostępu do CMS. Poproś administratora o rolę.',
     managedAccount: 'Dane konta są zarządzane przez panel Medusy.',
+    standalone: 'CMS otwiera się w panelu Medusy.',
   },
 }
 
 /**
  * Wraps the whole admin.
  *
- * Embed mode (flag on): account, logout and language controls are hidden until the page proves it is not framed,
- * so a direct visit to /admin behaves as before. In a frame the host controls locale and appearance, and account
- * identity remains read-only because it is owned by Medusa.
+ * Embed mode (flag on): account, logout, language and dashboard controls are hidden unless the page is opened
+ * standalone with `enableDebug=1` (then it behaves as without the flag). A standalone load without it is refused
+ * by the middleware and covered here by a message. In a frame the host controls the language (admin UI and the
+ * content locale, there is no dropdown) and appearance, and account identity remains read-only because it is
+ * owned by Medusa.
  */
 export const EmbedProvider: React.FC<Props> = ({ children, embedded, origins }) => {
   const pathname = usePathname()
@@ -55,16 +62,37 @@ export const EmbedProvider: React.FC<Props> = ({ children, embedded, origins }) 
     root.dataset.theme = theme.colorScheme
   }, [])
 
-  const applyHostLocale = useCallback((lng: 'en' | 'pl') => {
-    document.cookie = `payload-lng=${lng}; Path=/; Max-Age=31536000; SameSite=${
-      window.location.protocol === 'https:' ? 'None; Secure' : 'Lax'
-    }`
-    router.refresh()
-  }, [router])
+  const applyHostLocale = useCallback(
+    async (lng: 'en' | 'pl') => {
+      document.cookie = `payload-lng=${lng}; Path=/; Max-Age=31536000; SameSite=${
+        window.location.protocol === 'https:' ? 'None; Secure' : 'Lax'
+      }`
+      // The content locale dropdown is hidden in a frame, so the content language follows the host's: Payload
+      // reads it from the `locale` preference, unless the URL carries its own `?locale=`.
+      await fetch('/api/payload-preferences/locale', {
+        method: 'POST',
+        credentials: 'same-origin',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ value: lng }),
+      }).catch(() => undefined)
+      const url = new URL(window.location.href)
+      if (url.searchParams.has('locale')) {
+        url.searchParams.set('locale', lng)
+        router.replace(`${url.pathname}${url.search}`)
+      } else {
+        router.refresh()
+      }
+    },
+    [router],
+  )
 
   useEffect(() => {
     if (!embedded) return
-    const next = isFramed(window) ? 'frame' : 'direct'
+    const next: Mode = isFramed(window)
+      ? 'frame'
+      : isDebugRequested(window.location.search, document.cookie)
+        ? 'direct'
+        : 'blocked'
     document.documentElement.dataset.embed = next
     setMode(next)
   }, [embedded])
@@ -110,14 +138,14 @@ export const EmbedProvider: React.FC<Props> = ({ children, embedded, origins }) 
       hostOrigin.current = event.origin
       switch (message.type) {
         case 'hello':
-          applyHostLocale(message.payload.lng)
+          void applyHostLocale(message.payload.lng)
           if (message.payload.theme) applyHostTheme(message.payload.theme)
           break
         case 'nav:goto':
           router.push(message.payload.path)
           break
         case 'locale:changed':
-          applyHostLocale(message.payload.lng)
+          void applyHostLocale(message.payload.lng)
           break
         case 'theme:changed':
           applyHostTheme(message.payload)
@@ -148,6 +176,7 @@ export const EmbedProvider: React.FC<Props> = ({ children, embedded, origins }) 
 
   // Frame -> host: navigation and session state, on every admin route change.
   const screen: EmbedScreen | null = mode === 'frame' ? screenForPath(pathname) : null
+  const blocked = mode === 'blocked'
   useEffect(() => {
     if (mode !== 'frame') return
     const path = window.location.pathname
@@ -164,7 +193,7 @@ export const EmbedProvider: React.FC<Props> = ({ children, embedded, origins }) 
     <>
       {embedded ? <style>{EMBED_HIDE_CSS}</style> : null}
       {children}
-      {screen ? (
+      {screen || blocked ? (
         <div
           role="status"
           style={{
@@ -180,11 +209,13 @@ export const EmbedProvider: React.FC<Props> = ({ children, embedded, origins }) 
             zIndex: 2147483000,
           }}
         >
-          {screen.kind === 'denied'
-            ? texts.denied
-            : screen.kind === 'managed-account'
-              ? texts.managedAccount
-              : texts.renew}
+          {blocked
+            ? texts.standalone
+            : screen?.kind === 'denied'
+              ? texts.denied
+              : screen?.kind === 'managed-account'
+                ? texts.managedAccount
+                : texts.renew}
         </div>
       ) : null}
     </>
