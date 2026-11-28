@@ -7,13 +7,13 @@ import { captureError } from '../utils/captureError'
  * Preview for a storefront Global: the Live Preview pane (iframe inside the admin, the storefront reloads on
  * `payload-document-event`) and the Preview button (opens the same URL in a new tab, which is the fallback
  * where third-party cookies or nested frames are blocked). Both need STOREFRONT_URL and PREVIEW_SECRET and
- * disappear without them. A preview link needs a signed-in staff member, so the URL is `null` for anyone else.
+ * disappear without them. `path` is the storefront page the preview opens (an information page's own route). A preview link needs a signed-in staff member, so the URL is `null` for anyone else.
  */
-export const globalPreview = (slug: string): NonNullable<GlobalConfig['admin']> => {
+export const globalPreview = (slug: string, path = '/'): NonNullable<GlobalConfig['admin']> => {
   const url = async (locale: string, user: { id?: number | string } | null | undefined) => {
     if (user?.id === undefined) return null
     try {
-      return await buildPreviewUrl(process.env, { global: slug, locale, userId: user.id })
+      return await buildPreviewUrl(process.env, { global: slug, locale, userId: user.id, path })
     } catch (error) {
       // Payload logs and swallows a failing preview URL (the buttons just disappear), so report it here. Rethrown
       // so Payload keeps doing exactly that.

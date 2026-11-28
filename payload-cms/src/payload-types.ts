@@ -109,6 +109,16 @@ export interface Config {
     'shop-the-look': ShopTheLook;
     'size-guide': SizeGuide;
     'product-page-info': ProductPageInfo;
+    'info-shipping': InfoShipping;
+    'info-returns': InfoReturn;
+    'info-size-guide': InfoSizeGuide;
+    'info-track-order': InfoTrackOrder;
+    'info-faq': InfoFaq;
+    'info-about': InfoAbout;
+    'info-studio': InfoStudio;
+    'info-journal': InfoJournal;
+    'info-materials': InfoMaterial;
+    'info-careers': InfoCareer;
   };
   globalsSelect: {
     navigation: NavigationSelect<false> | NavigationSelect<true>;
@@ -121,6 +131,16 @@ export interface Config {
     'shop-the-look': ShopTheLookSelect<false> | ShopTheLookSelect<true>;
     'size-guide': SizeGuideSelect<false> | SizeGuideSelect<true>;
     'product-page-info': ProductPageInfoSelect<false> | ProductPageInfoSelect<true>;
+    'info-shipping': InfoShippingSelect<false> | InfoShippingSelect<true>;
+    'info-returns': InfoReturnsSelect<false> | InfoReturnsSelect<true>;
+    'info-size-guide': InfoSizeGuideSelect<false> | InfoSizeGuideSelect<true>;
+    'info-track-order': InfoTrackOrderSelect<false> | InfoTrackOrderSelect<true>;
+    'info-faq': InfoFaqSelect<false> | InfoFaqSelect<true>;
+    'info-about': InfoAboutSelect<false> | InfoAboutSelect<true>;
+    'info-studio': InfoStudioSelect<false> | InfoStudioSelect<true>;
+    'info-journal': InfoJournalSelect<false> | InfoJournalSelect<true>;
+    'info-materials': InfoMaterialsSelect<false> | InfoMaterialsSelect<true>;
+    'info-careers': InfoCareersSelect<false> | InfoCareersSelect<true>;
   };
   locale: 'en' | 'pl';
   widgets: {
@@ -1219,6 +1239,551 @@ export interface ProductPageInfo {
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "info-shipping".
+ */
+export interface InfoShipping {
+  id: number;
+  /**
+   * Browser tab title and search result title.
+   */
+  title: string;
+  /**
+   * Search result description, about 150 characters.
+   */
+  description: string;
+  /**
+   * Small label above the heading, for example "HELP".
+   */
+  eyebrow: string;
+  heading: string;
+  /**
+   * Introduction under the heading.
+   */
+  lead: string;
+  sections: {
+    /**
+     * Part of the section link (#delivery) and of the table of contents. Not translated; do not change it on a published page, links to it would break.
+     */
+    anchor: string;
+    heading: string;
+    blocks: (
+      | InfoTextBlock
+      | InfoPlaceholderBlock
+      | InfoListBlock
+      | InfoLinkBlock
+      | InfoFaqBlock
+      | InfoSizeTableBlock
+      | InfoContactBlock
+      | InfoJournalBlock
+    )[];
+    id?: string | null;
+  }[];
+  _status?: ('draft' | 'published') | null;
+  updatedAt?: string | null;
+  createdAt?: string | null;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "InfoTextBlock".
+ */
+export interface InfoTextBlock {
+  text: string;
+  id?: string | null;
+  blockName?: string | null;
+  blockType: 'text';
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "InfoPlaceholderBlock".
+ */
+export interface InfoPlaceholderBlock {
+  text: string;
+  id?: string | null;
+  blockName?: string | null;
+  blockType: 'placeholder';
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "InfoListBlock".
+ */
+export interface InfoListBlock {
+  /**
+   * Numbered instead of bulleted.
+   */
+  ordered?: boolean | null;
+  items: {
+    text: string;
+    id?: string | null;
+  }[];
+  id?: string | null;
+  blockName?: string | null;
+  blockType: 'list';
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "InfoLinkBlock".
+ */
+export interface InfoLinkBlock {
+  label: string;
+  /**
+   * A page of the store, relative to the country (/store, /account). Not an external address.
+   */
+  to: string;
+  id?: string | null;
+  blockName?: string | null;
+  blockType: 'link';
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "InfoFaqBlock".
+ */
+export interface InfoFaqBlock {
+  /**
+   * Shown as an accordion and, on a published page, as FAQ structured data for search engines.
+   */
+  items: {
+    question: string;
+    answer: string;
+    id?: string | null;
+  }[];
+  id?: string | null;
+  blockName?: string | null;
+  blockType: 'faq';
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "InfoSizeTableBlock".
+ */
+export interface InfoSizeTableBlock {
+  id?: string | null;
+  blockName?: string | null;
+  blockType: 'sizeTable';
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "InfoContactBlock".
+ */
+export interface InfoContactBlock {
+  id?: string | null;
+  blockName?: string | null;
+  blockType: 'contact';
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "InfoJournalBlock".
+ */
+export interface InfoJournalBlock {
+  id?: string | null;
+  blockName?: string | null;
+  blockType: 'journal';
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "info-returns".
+ */
+export interface InfoReturn {
+  id: number;
+  /**
+   * Browser tab title and search result title.
+   */
+  title: string;
+  /**
+   * Search result description, about 150 characters.
+   */
+  description: string;
+  /**
+   * Small label above the heading, for example "HELP".
+   */
+  eyebrow: string;
+  heading: string;
+  /**
+   * Introduction under the heading.
+   */
+  lead: string;
+  sections: {
+    /**
+     * Part of the section link (#delivery) and of the table of contents. Not translated; do not change it on a published page, links to it would break.
+     */
+    anchor: string;
+    heading: string;
+    blocks: (
+      | InfoTextBlock
+      | InfoPlaceholderBlock
+      | InfoListBlock
+      | InfoLinkBlock
+      | InfoFaqBlock
+      | InfoSizeTableBlock
+      | InfoContactBlock
+      | InfoJournalBlock
+    )[];
+    id?: string | null;
+  }[];
+  _status?: ('draft' | 'published') | null;
+  updatedAt?: string | null;
+  createdAt?: string | null;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "info-size-guide".
+ */
+export interface InfoSizeGuide {
+  id: number;
+  /**
+   * Browser tab title and search result title.
+   */
+  title: string;
+  /**
+   * Search result description, about 150 characters.
+   */
+  description: string;
+  /**
+   * Small label above the heading, for example "HELP".
+   */
+  eyebrow: string;
+  heading: string;
+  /**
+   * Introduction under the heading.
+   */
+  lead: string;
+  sections: {
+    /**
+     * Part of the section link (#delivery) and of the table of contents. Not translated; do not change it on a published page, links to it would break.
+     */
+    anchor: string;
+    heading: string;
+    blocks: (
+      | InfoTextBlock
+      | InfoPlaceholderBlock
+      | InfoListBlock
+      | InfoLinkBlock
+      | InfoFaqBlock
+      | InfoSizeTableBlock
+      | InfoContactBlock
+      | InfoJournalBlock
+    )[];
+    id?: string | null;
+  }[];
+  _status?: ('draft' | 'published') | null;
+  updatedAt?: string | null;
+  createdAt?: string | null;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "info-track-order".
+ */
+export interface InfoTrackOrder {
+  id: number;
+  /**
+   * Browser tab title and search result title.
+   */
+  title: string;
+  /**
+   * Search result description, about 150 characters.
+   */
+  description: string;
+  /**
+   * Small label above the heading, for example "HELP".
+   */
+  eyebrow: string;
+  heading: string;
+  /**
+   * Introduction under the heading.
+   */
+  lead: string;
+  sections: {
+    /**
+     * Part of the section link (#delivery) and of the table of contents. Not translated; do not change it on a published page, links to it would break.
+     */
+    anchor: string;
+    heading: string;
+    blocks: (
+      | InfoTextBlock
+      | InfoPlaceholderBlock
+      | InfoListBlock
+      | InfoLinkBlock
+      | InfoFaqBlock
+      | InfoSizeTableBlock
+      | InfoContactBlock
+      | InfoJournalBlock
+    )[];
+    id?: string | null;
+  }[];
+  _status?: ('draft' | 'published') | null;
+  updatedAt?: string | null;
+  createdAt?: string | null;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "info-faq".
+ */
+export interface InfoFaq {
+  id: number;
+  /**
+   * Browser tab title and search result title.
+   */
+  title: string;
+  /**
+   * Search result description, about 150 characters.
+   */
+  description: string;
+  /**
+   * Small label above the heading, for example "HELP".
+   */
+  eyebrow: string;
+  heading: string;
+  /**
+   * Introduction under the heading.
+   */
+  lead: string;
+  sections: {
+    /**
+     * Part of the section link (#delivery) and of the table of contents. Not translated; do not change it on a published page, links to it would break.
+     */
+    anchor: string;
+    heading: string;
+    blocks: (
+      | InfoTextBlock
+      | InfoPlaceholderBlock
+      | InfoListBlock
+      | InfoLinkBlock
+      | InfoFaqBlock
+      | InfoSizeTableBlock
+      | InfoContactBlock
+      | InfoJournalBlock
+    )[];
+    id?: string | null;
+  }[];
+  _status?: ('draft' | 'published') | null;
+  updatedAt?: string | null;
+  createdAt?: string | null;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "info-about".
+ */
+export interface InfoAbout {
+  id: number;
+  /**
+   * Browser tab title and search result title.
+   */
+  title: string;
+  /**
+   * Search result description, about 150 characters.
+   */
+  description: string;
+  /**
+   * Small label above the heading, for example "HELP".
+   */
+  eyebrow: string;
+  heading: string;
+  /**
+   * Introduction under the heading.
+   */
+  lead: string;
+  sections: {
+    /**
+     * Part of the section link (#delivery) and of the table of contents. Not translated; do not change it on a published page, links to it would break.
+     */
+    anchor: string;
+    heading: string;
+    blocks: (
+      | InfoTextBlock
+      | InfoPlaceholderBlock
+      | InfoListBlock
+      | InfoLinkBlock
+      | InfoFaqBlock
+      | InfoSizeTableBlock
+      | InfoContactBlock
+      | InfoJournalBlock
+    )[];
+    id?: string | null;
+  }[];
+  _status?: ('draft' | 'published') | null;
+  updatedAt?: string | null;
+  createdAt?: string | null;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "info-studio".
+ */
+export interface InfoStudio {
+  id: number;
+  /**
+   * Browser tab title and search result title.
+   */
+  title: string;
+  /**
+   * Search result description, about 150 characters.
+   */
+  description: string;
+  /**
+   * Small label above the heading, for example "HELP".
+   */
+  eyebrow: string;
+  heading: string;
+  /**
+   * Introduction under the heading.
+   */
+  lead: string;
+  sections: {
+    /**
+     * Part of the section link (#delivery) and of the table of contents. Not translated; do not change it on a published page, links to it would break.
+     */
+    anchor: string;
+    heading: string;
+    blocks: (
+      | InfoTextBlock
+      | InfoPlaceholderBlock
+      | InfoListBlock
+      | InfoLinkBlock
+      | InfoFaqBlock
+      | InfoSizeTableBlock
+      | InfoContactBlock
+      | InfoJournalBlock
+    )[];
+    id?: string | null;
+  }[];
+  _status?: ('draft' | 'published') | null;
+  updatedAt?: string | null;
+  createdAt?: string | null;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "info-journal".
+ */
+export interface InfoJournal {
+  id: number;
+  /**
+   * Browser tab title and search result title.
+   */
+  title: string;
+  /**
+   * Search result description, about 150 characters.
+   */
+  description: string;
+  /**
+   * Small label above the heading, for example "HELP".
+   */
+  eyebrow: string;
+  heading: string;
+  /**
+   * Introduction under the heading.
+   */
+  lead: string;
+  sections: {
+    /**
+     * Part of the section link (#delivery) and of the table of contents. Not translated; do not change it on a published page, links to it would break.
+     */
+    anchor: string;
+    heading: string;
+    blocks: (
+      | InfoTextBlock
+      | InfoPlaceholderBlock
+      | InfoListBlock
+      | InfoLinkBlock
+      | InfoFaqBlock
+      | InfoSizeTableBlock
+      | InfoContactBlock
+      | InfoJournalBlock
+    )[];
+    id?: string | null;
+  }[];
+  _status?: ('draft' | 'published') | null;
+  updatedAt?: string | null;
+  createdAt?: string | null;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "info-materials".
+ */
+export interface InfoMaterial {
+  id: number;
+  /**
+   * Browser tab title and search result title.
+   */
+  title: string;
+  /**
+   * Search result description, about 150 characters.
+   */
+  description: string;
+  /**
+   * Small label above the heading, for example "HELP".
+   */
+  eyebrow: string;
+  heading: string;
+  /**
+   * Introduction under the heading.
+   */
+  lead: string;
+  sections: {
+    /**
+     * Part of the section link (#delivery) and of the table of contents. Not translated; do not change it on a published page, links to it would break.
+     */
+    anchor: string;
+    heading: string;
+    blocks: (
+      | InfoTextBlock
+      | InfoPlaceholderBlock
+      | InfoListBlock
+      | InfoLinkBlock
+      | InfoFaqBlock
+      | InfoSizeTableBlock
+      | InfoContactBlock
+      | InfoJournalBlock
+    )[];
+    id?: string | null;
+  }[];
+  _status?: ('draft' | 'published') | null;
+  updatedAt?: string | null;
+  createdAt?: string | null;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "info-careers".
+ */
+export interface InfoCareer {
+  id: number;
+  /**
+   * Browser tab title and search result title.
+   */
+  title: string;
+  /**
+   * Search result description, about 150 characters.
+   */
+  description: string;
+  /**
+   * Small label above the heading, for example "HELP".
+   */
+  eyebrow: string;
+  heading: string;
+  /**
+   * Introduction under the heading.
+   */
+  lead: string;
+  sections: {
+    /**
+     * Part of the section link (#delivery) and of the table of contents. Not translated; do not change it on a published page, links to it would break.
+     */
+    anchor: string;
+    heading: string;
+    blocks: (
+      | InfoTextBlock
+      | InfoPlaceholderBlock
+      | InfoListBlock
+      | InfoLinkBlock
+      | InfoFaqBlock
+      | InfoSizeTableBlock
+      | InfoContactBlock
+      | InfoJournalBlock
+    )[];
+    id?: string | null;
+  }[];
+  _status?: ('draft' | 'published') | null;
+  updatedAt?: string | null;
+  createdAt?: string | null;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
  * via the `definition` "navigation_select".
  */
 export interface NavigationSelect<T extends boolean = true> {
@@ -1441,6 +2006,428 @@ export interface ProductPageInfoSelect<T extends boolean = true> {
   returns?: T;
   priceNote?: T;
   shippingTime?: T;
+  _status?: T;
+  updatedAt?: T;
+  createdAt?: T;
+  globalType?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "info-shipping_select".
+ */
+export interface InfoShippingSelect<T extends boolean = true> {
+  title?: T;
+  description?: T;
+  eyebrow?: T;
+  heading?: T;
+  lead?: T;
+  sections?:
+    | T
+    | {
+        anchor?: T;
+        heading?: T;
+        blocks?:
+          | T
+          | {
+              text?: T | InfoTextBlockSelect<T>;
+              placeholder?: T | InfoPlaceholderBlockSelect<T>;
+              list?: T | InfoListBlockSelect<T>;
+              link?: T | InfoLinkBlockSelect<T>;
+              faq?: T | InfoFaqBlockSelect<T>;
+              sizeTable?: T | InfoSizeTableBlockSelect<T>;
+              contact?: T | InfoContactBlockSelect<T>;
+              journal?: T | InfoJournalBlockSelect<T>;
+            };
+        id?: T;
+      };
+  _status?: T;
+  updatedAt?: T;
+  createdAt?: T;
+  globalType?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "InfoTextBlock_select".
+ */
+export interface InfoTextBlockSelect<T extends boolean = true> {
+  text?: T;
+  id?: T;
+  blockName?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "InfoPlaceholderBlock_select".
+ */
+export interface InfoPlaceholderBlockSelect<T extends boolean = true> {
+  text?: T;
+  id?: T;
+  blockName?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "InfoListBlock_select".
+ */
+export interface InfoListBlockSelect<T extends boolean = true> {
+  ordered?: T;
+  items?:
+    | T
+    | {
+        text?: T;
+        id?: T;
+      };
+  id?: T;
+  blockName?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "InfoLinkBlock_select".
+ */
+export interface InfoLinkBlockSelect<T extends boolean = true> {
+  label?: T;
+  to?: T;
+  id?: T;
+  blockName?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "InfoFaqBlock_select".
+ */
+export interface InfoFaqBlockSelect<T extends boolean = true> {
+  items?:
+    | T
+    | {
+        question?: T;
+        answer?: T;
+        id?: T;
+      };
+  id?: T;
+  blockName?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "InfoSizeTableBlock_select".
+ */
+export interface InfoSizeTableBlockSelect<T extends boolean = true> {
+  id?: T;
+  blockName?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "InfoContactBlock_select".
+ */
+export interface InfoContactBlockSelect<T extends boolean = true> {
+  id?: T;
+  blockName?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "InfoJournalBlock_select".
+ */
+export interface InfoJournalBlockSelect<T extends boolean = true> {
+  id?: T;
+  blockName?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "info-returns_select".
+ */
+export interface InfoReturnsSelect<T extends boolean = true> {
+  title?: T;
+  description?: T;
+  eyebrow?: T;
+  heading?: T;
+  lead?: T;
+  sections?:
+    | T
+    | {
+        anchor?: T;
+        heading?: T;
+        blocks?:
+          | T
+          | {
+              text?: T | InfoTextBlockSelect<T>;
+              placeholder?: T | InfoPlaceholderBlockSelect<T>;
+              list?: T | InfoListBlockSelect<T>;
+              link?: T | InfoLinkBlockSelect<T>;
+              faq?: T | InfoFaqBlockSelect<T>;
+              sizeTable?: T | InfoSizeTableBlockSelect<T>;
+              contact?: T | InfoContactBlockSelect<T>;
+              journal?: T | InfoJournalBlockSelect<T>;
+            };
+        id?: T;
+      };
+  _status?: T;
+  updatedAt?: T;
+  createdAt?: T;
+  globalType?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "info-size-guide_select".
+ */
+export interface InfoSizeGuideSelect<T extends boolean = true> {
+  title?: T;
+  description?: T;
+  eyebrow?: T;
+  heading?: T;
+  lead?: T;
+  sections?:
+    | T
+    | {
+        anchor?: T;
+        heading?: T;
+        blocks?:
+          | T
+          | {
+              text?: T | InfoTextBlockSelect<T>;
+              placeholder?: T | InfoPlaceholderBlockSelect<T>;
+              list?: T | InfoListBlockSelect<T>;
+              link?: T | InfoLinkBlockSelect<T>;
+              faq?: T | InfoFaqBlockSelect<T>;
+              sizeTable?: T | InfoSizeTableBlockSelect<T>;
+              contact?: T | InfoContactBlockSelect<T>;
+              journal?: T | InfoJournalBlockSelect<T>;
+            };
+        id?: T;
+      };
+  _status?: T;
+  updatedAt?: T;
+  createdAt?: T;
+  globalType?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "info-track-order_select".
+ */
+export interface InfoTrackOrderSelect<T extends boolean = true> {
+  title?: T;
+  description?: T;
+  eyebrow?: T;
+  heading?: T;
+  lead?: T;
+  sections?:
+    | T
+    | {
+        anchor?: T;
+        heading?: T;
+        blocks?:
+          | T
+          | {
+              text?: T | InfoTextBlockSelect<T>;
+              placeholder?: T | InfoPlaceholderBlockSelect<T>;
+              list?: T | InfoListBlockSelect<T>;
+              link?: T | InfoLinkBlockSelect<T>;
+              faq?: T | InfoFaqBlockSelect<T>;
+              sizeTable?: T | InfoSizeTableBlockSelect<T>;
+              contact?: T | InfoContactBlockSelect<T>;
+              journal?: T | InfoJournalBlockSelect<T>;
+            };
+        id?: T;
+      };
+  _status?: T;
+  updatedAt?: T;
+  createdAt?: T;
+  globalType?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "info-faq_select".
+ */
+export interface InfoFaqSelect<T extends boolean = true> {
+  title?: T;
+  description?: T;
+  eyebrow?: T;
+  heading?: T;
+  lead?: T;
+  sections?:
+    | T
+    | {
+        anchor?: T;
+        heading?: T;
+        blocks?:
+          | T
+          | {
+              text?: T | InfoTextBlockSelect<T>;
+              placeholder?: T | InfoPlaceholderBlockSelect<T>;
+              list?: T | InfoListBlockSelect<T>;
+              link?: T | InfoLinkBlockSelect<T>;
+              faq?: T | InfoFaqBlockSelect<T>;
+              sizeTable?: T | InfoSizeTableBlockSelect<T>;
+              contact?: T | InfoContactBlockSelect<T>;
+              journal?: T | InfoJournalBlockSelect<T>;
+            };
+        id?: T;
+      };
+  _status?: T;
+  updatedAt?: T;
+  createdAt?: T;
+  globalType?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "info-about_select".
+ */
+export interface InfoAboutSelect<T extends boolean = true> {
+  title?: T;
+  description?: T;
+  eyebrow?: T;
+  heading?: T;
+  lead?: T;
+  sections?:
+    | T
+    | {
+        anchor?: T;
+        heading?: T;
+        blocks?:
+          | T
+          | {
+              text?: T | InfoTextBlockSelect<T>;
+              placeholder?: T | InfoPlaceholderBlockSelect<T>;
+              list?: T | InfoListBlockSelect<T>;
+              link?: T | InfoLinkBlockSelect<T>;
+              faq?: T | InfoFaqBlockSelect<T>;
+              sizeTable?: T | InfoSizeTableBlockSelect<T>;
+              contact?: T | InfoContactBlockSelect<T>;
+              journal?: T | InfoJournalBlockSelect<T>;
+            };
+        id?: T;
+      };
+  _status?: T;
+  updatedAt?: T;
+  createdAt?: T;
+  globalType?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "info-studio_select".
+ */
+export interface InfoStudioSelect<T extends boolean = true> {
+  title?: T;
+  description?: T;
+  eyebrow?: T;
+  heading?: T;
+  lead?: T;
+  sections?:
+    | T
+    | {
+        anchor?: T;
+        heading?: T;
+        blocks?:
+          | T
+          | {
+              text?: T | InfoTextBlockSelect<T>;
+              placeholder?: T | InfoPlaceholderBlockSelect<T>;
+              list?: T | InfoListBlockSelect<T>;
+              link?: T | InfoLinkBlockSelect<T>;
+              faq?: T | InfoFaqBlockSelect<T>;
+              sizeTable?: T | InfoSizeTableBlockSelect<T>;
+              contact?: T | InfoContactBlockSelect<T>;
+              journal?: T | InfoJournalBlockSelect<T>;
+            };
+        id?: T;
+      };
+  _status?: T;
+  updatedAt?: T;
+  createdAt?: T;
+  globalType?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "info-journal_select".
+ */
+export interface InfoJournalSelect<T extends boolean = true> {
+  title?: T;
+  description?: T;
+  eyebrow?: T;
+  heading?: T;
+  lead?: T;
+  sections?:
+    | T
+    | {
+        anchor?: T;
+        heading?: T;
+        blocks?:
+          | T
+          | {
+              text?: T | InfoTextBlockSelect<T>;
+              placeholder?: T | InfoPlaceholderBlockSelect<T>;
+              list?: T | InfoListBlockSelect<T>;
+              link?: T | InfoLinkBlockSelect<T>;
+              faq?: T | InfoFaqBlockSelect<T>;
+              sizeTable?: T | InfoSizeTableBlockSelect<T>;
+              contact?: T | InfoContactBlockSelect<T>;
+              journal?: T | InfoJournalBlockSelect<T>;
+            };
+        id?: T;
+      };
+  _status?: T;
+  updatedAt?: T;
+  createdAt?: T;
+  globalType?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "info-materials_select".
+ */
+export interface InfoMaterialsSelect<T extends boolean = true> {
+  title?: T;
+  description?: T;
+  eyebrow?: T;
+  heading?: T;
+  lead?: T;
+  sections?:
+    | T
+    | {
+        anchor?: T;
+        heading?: T;
+        blocks?:
+          | T
+          | {
+              text?: T | InfoTextBlockSelect<T>;
+              placeholder?: T | InfoPlaceholderBlockSelect<T>;
+              list?: T | InfoListBlockSelect<T>;
+              link?: T | InfoLinkBlockSelect<T>;
+              faq?: T | InfoFaqBlockSelect<T>;
+              sizeTable?: T | InfoSizeTableBlockSelect<T>;
+              contact?: T | InfoContactBlockSelect<T>;
+              journal?: T | InfoJournalBlockSelect<T>;
+            };
+        id?: T;
+      };
+  _status?: T;
+  updatedAt?: T;
+  createdAt?: T;
+  globalType?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "info-careers_select".
+ */
+export interface InfoCareersSelect<T extends boolean = true> {
+  title?: T;
+  description?: T;
+  eyebrow?: T;
+  heading?: T;
+  lead?: T;
+  sections?:
+    | T
+    | {
+        anchor?: T;
+        heading?: T;
+        blocks?:
+          | T
+          | {
+              text?: T | InfoTextBlockSelect<T>;
+              placeholder?: T | InfoPlaceholderBlockSelect<T>;
+              list?: T | InfoListBlockSelect<T>;
+              link?: T | InfoLinkBlockSelect<T>;
+              faq?: T | InfoFaqBlockSelect<T>;
+              sizeTable?: T | InfoSizeTableBlockSelect<T>;
+              contact?: T | InfoContactBlockSelect<T>;
+              journal?: T | InfoJournalBlockSelect<T>;
+            };
+        id?: T;
+      };
   _status?: T;
   updatedAt?: T;
   createdAt?: T;

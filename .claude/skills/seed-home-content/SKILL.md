@@ -36,6 +36,10 @@ Writes the production database and bucket, so it needs the owner's go-ahead for 
 3. `SEED_CONFIRM=yes SEED_SOURCE=... pnpm seed:home`. Without `SEED_CONFIRM=yes` the script refuses to run against a non-localhost database.
 4. Verify with the public API: `/api/globals/<slug>?locale=pl&depth=1` returns 200 with populated `image.url`, and the image URLs open.
 
+## Information pages
+
+`pnpm seed:info-pages` (same `SEED_SOURCE` / `SEED_REF` / `SEED_CONFIRM` rules) fills the ten `info-*` Globals from `INFO_PAGES` and `pages.<id>.*` (nuxtMedusa#118). Unlike `seed:home` it skips a page that already has content, so re-running never replaces the owner's edits; `SEED_OVERWRITE=yes` does. The contract is in `payload-backend-todo`.
+
 ## Storefront follow-ups (outside this repo, not done here)
 
 Record, do not apply from this repo:

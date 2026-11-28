@@ -1,7 +1,13 @@
 import assert from 'node:assert/strict'
 import { describe, it } from 'node:test'
 
-import { validateSizeGuideRows, validateStringArray } from './validators.ts'
+import {
+  validateAnchor,
+  validateSizeGuideRows,
+  validateStorePath,
+  validateStringArray,
+  validateUniqueAnchors,
+} from './validators.ts'
 
 describe('validateStringArray', () => {
   it('accepts arrays of text only', () => {
@@ -26,5 +32,39 @@ describe('validateSizeGuideRows', () => {
     assert.equal(validateSizeGuideRows([{ size: 'S', values: ['1'] }], undefined), true)
     assert.equal(validateSizeGuideRows(undefined, 2), true)
     assert.equal(validateSizeGuideRows([], 2), true)
+  })
+})
+
+describe('validateAnchor', () => {
+  it('accepts a letter followed by letters, digits and dashes', () => {
+    assert.equal(validateAnchor('delivery'), true)
+    assert.equal(validateAnchor('Step-2'), true)
+  })
+
+  it('rejects empty, spaced, leading digit or non-text values', () => {
+    for (const value of ['', 'a b', '1a', '-a', 'a_b', undefined, 3]) assert.notEqual(validateAnchor(value), true)
+  })
+})
+
+describe('validateStorePath', () => {
+  it('accepts paths inside the store, with an optional fragment', () => {
+    for (const value of ['/store', '/account', '/#studio-story', '/help/faq']) assert.equal(validateStorePath(value), true)
+  })
+
+  it('rejects external, protocol-relative, relative and non-text values', () => {
+    for (const value of ['https://x.example', '//x.example', 'store', '/a b', '', undefined]) {
+      assert.notEqual(validateStorePath(value), true)
+    }
+  })
+})
+
+describe('validateUniqueAnchors', () => {
+  it('accepts distinct anchors and ignores rows without one', () => {
+    assert.equal(validateUniqueAnchors([{ anchor: 'a' }, { anchor: 'b' }, {}]), true)
+    assert.equal(validateUniqueAnchors(undefined), true)
+  })
+
+  it('names a repeated anchor', () => {
+    assert.match(String(validateUniqueAnchors([{ anchor: 'a' }, { anchor: 'b' }, { anchor: 'a' }])), /"a"/)
   })
 })

@@ -27,6 +27,8 @@ export type PreviewParams = {
   global: string
   locale: string
   userId: number | string
+  /** Storefront path the preview opens, relative to the country (`/` home, `/help/faq`). Default `/`. */
+  path?: string
   /** Seconds since epoch; injectable for tests. */
   now?: number
 }
@@ -53,6 +55,9 @@ export const previewToken = async (secret: string, { global, locale, userId, now
     .sign(new TextEncoder().encode(secret))
 }
 
+/** What the storefront accepts as `path`: letters, digits, `-`, `_` and `/`, starting with `/`. */
+export const isPreviewPath = (path: string): boolean => /^\/[A-Za-z0-9_/-]*$/.test(path)
+
 /** `null` (no preview button) when the storefront URL or the secret is missing: the CMS must keep working. */
 export const buildPreviewUrl = async (env: Env, params: PreviewParams): Promise<string | null> => {
   const origin = storefrontOrigin(env)
@@ -61,7 +66,7 @@ export const buildPreviewUrl = async (env: Env, params: PreviewParams): Promise<
   const query = new URLSearchParams({
     token: await previewToken(secret, params),
     locale: params.locale,
-    path: '/',
+    path: params.path ?? '/',
     global: params.global,
   })
   return `${origin}${PREVIEW_PATH}?${query.toString()}`

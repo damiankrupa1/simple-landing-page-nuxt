@@ -24,6 +24,7 @@ import { Brands } from './globals/Brands'
 import { CampaignSlides } from './globals/CampaignSlides'
 import { CategoryTiles } from './globals/CategoryTiles'
 import { FooterContent } from './globals/FooterContent'
+import { InfoPages } from './globals/InfoPages'
 import { JournalSection } from './globals/JournalSection'
 import { Navigation } from './globals/Navigation'
 import { ProductPageInfo } from './globals/ProductPageInfo'
@@ -125,6 +126,7 @@ export default buildConfig({
     ShopTheLook,
     SizeGuide,
     ProductPageInfo,
+    ...InfoPages,
   ],
   // Errors Payload turns into a response (REST, GraphQL) go to Sentry through captureError; the response is unchanged.
   hooks: { afterError: [reportError] },

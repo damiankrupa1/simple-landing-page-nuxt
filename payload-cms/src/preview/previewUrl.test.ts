@@ -3,7 +3,14 @@ import { describe, it } from 'node:test'
 
 import { jwtVerify } from 'jose'
 
-import { PREVIEW_AUDIENCE, PREVIEW_ISSUER, buildPreviewUrl, previewToken, storefrontOrigin } from './previewUrl.ts'
+import {
+  PREVIEW_AUDIENCE,
+  PREVIEW_ISSUER,
+  buildPreviewUrl,
+  isPreviewPath,
+  previewToken,
+  storefrontOrigin,
+} from './previewUrl.ts'
 
 const env = { STOREFRONT_URL: 'https://shop.example/some/path/', PREVIEW_SECRET: 'preview-secret' }
 const params = { global: 'navigation', locale: 'pl', userId: 7, now: 1_800_000_000 }
@@ -68,5 +75,24 @@ describe('buildPreviewUrl', () => {
   it('is null (no preview button) without the storefront URL or the secret', async () => {
     assert.equal(await buildPreviewUrl({ PREVIEW_SECRET: 'x' }, params), null)
     assert.equal(await buildPreviewUrl({ STOREFRONT_URL: 'https://shop.example' }, params), null)
+  })
+})
+
+describe('preview path', () => {
+  it('opens the home page unless a path is given', async () => {
+    const url = new URL((await buildPreviewUrl(env, params))!)
+    assert.equal(url.searchParams.get('path'), '/')
+  })
+
+  it('opens the given storefront page', async () => {
+    const url = new URL((await buildPreviewUrl(env, { ...params, path: '/help/faq' }))!)
+    assert.equal(url.searchParams.get('path'), '/help/faq')
+  })
+
+  it('accepts only the paths the storefront accepts', () => {
+    for (const path of ['/', '/store', '/help/size-guide', '/materials-and-care']) assert.equal(isPreviewPath(path), true)
+    for (const path of ['', 'store', '//evil.example', '/a?b=1', '/a#b', '/a b', 'https://x.example']) {
+      assert.equal(isPreviewPath(path), false, path)
+    }
   })
 })
